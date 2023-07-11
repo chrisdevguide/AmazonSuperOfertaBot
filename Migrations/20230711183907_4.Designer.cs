@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AmazonSuperOfertaBot.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20230711182259_1")]
-    partial class _1
+    [Migration("20230711183907_4")]
+    partial class _4
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
