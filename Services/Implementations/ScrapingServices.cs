@@ -33,6 +33,8 @@ namespace AmazonApi.Services.Implementations
 
             foreach (HtmlNode amazonProductNode in amazonProductNodes)
             {
+                if (amazonProductNode is null) continue;
+
                 AmazonProduct amazonProduct = new()
                 {
                     Asin = amazonProductNode.GetAttributeValue(scrapeConfiguration.AsinPath, null),
