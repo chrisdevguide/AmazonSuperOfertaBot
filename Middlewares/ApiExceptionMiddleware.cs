@@ -10,11 +10,11 @@ namespace AmazonSuperOfertaBot.Middlewares
         private readonly ILogger<ApiExceptionMiddleware> _logger;
         private readonly DataContext _dataContext;
 
-        public ApiExceptionMiddleware(RequestDelegate next, ILogger<ApiExceptionMiddleware> logger, DataContext dataContext)
+        public ApiExceptionMiddleware(RequestDelegate next, ILogger<ApiExceptionMiddleware> logger, IServiceProvider serviceProvider)
         {
             _next = next;
             _logger = logger;
-            _dataContext = dataContext;
+            _dataContext = serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
         }
 
         public async Task InvokeAsync(HttpContext httpContext)

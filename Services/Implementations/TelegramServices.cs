@@ -1,4 +1,5 @@
-﻿using AmazonApi.Models;
+﻿using AmazonApi.Data;
+using AmazonApi.Models;
 using AmazonApi.Services.Implementations;
 using ElAhorrador.Data.Repositories.Implementations;
 using ElAhorrador.Data.Repositories.Interfaces;
@@ -22,15 +23,17 @@ namespace ElAhorrador.Services.Implementations
         private readonly ITelegramChatRepository _telegramChatRepository;
         private readonly IScrapingServices _scrapingServices;
         private readonly IAmazonAlertRepository _amazonAlertRepository;
+        private readonly DataContext _dataContext;
 
         public TelegramServices(IConfigurationRepository configurationRepository, ITelegramChatRepository telegramChatRepository, IScrapingServices scrapingServices,
-            IAmazonAlertRepository amazonAlertRepository)
+            IAmazonAlertRepository amazonAlertRepository, DataContext dataContext)
         {
             _telegramConfiguration = configurationRepository.GetConfiguration<TelegramConfiguration>().Result;
             _botClient = new(_telegramConfiguration.ApiKey);
             _telegramChatRepository = telegramChatRepository;
             _scrapingServices = scrapingServices;
             _amazonAlertRepository = amazonAlertRepository;
+            _dataContext = dataContext;
         }
 
         public void StartBot()
@@ -380,10 +383,15 @@ namespace ElAhorrador.Services.Implementations
             }
         }
 
-        Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+        async Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
-            StartBot();
-            return Task.CompletedTask;
+            _dataContext.Logs.Add(new()
+            {
+                Type = "Error",
+                Data = JsonConvert.SerializeObject(exception),
+            });
+
+            await _dataContext.SaveChangesAsync();
         }
 
         private async Task SendAmazonProduct(AmazonProduct amazonProduct, string chatId)
