@@ -17,13 +17,6 @@ namespace ElAhorrador.Data.Repositories.Implementations
 
         public async Task<T> GetConfiguration<T>()
         {
-            _dataContext.Logs.Add(new()
-            {
-                Type = "Test",
-                Data = typeof(T).Name,
-
-            });
-            await _dataContext.SaveChangesAsync();
             Configuration configuration = await _dataContext.Configurations.FirstOrDefaultAsync(x => x.Name == typeof(T).Name);
             return JsonConvert.DeserializeObject<T>(configuration.Value);
         }
