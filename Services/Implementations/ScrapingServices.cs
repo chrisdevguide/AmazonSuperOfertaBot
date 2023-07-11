@@ -27,6 +27,8 @@ namespace AmazonApi.Services.Implementations
             ScrapeConfiguration scrapeConfiguration = await _configurationRepository.GetConfiguration<ScrapeConfiguration>() ?? throw new ApiException("No configuration has been loaded.");
 
             HtmlDocument htmlDocument = await GetHtmlDocument($"{scrapeConfiguration.SearchProductUrl}{request.SearchText}");
+            if (htmlDocument is null) return null;
+
             HtmlNodeCollection amazonProductNodes = htmlDocument.DocumentNode.SelectNodes(scrapeConfiguration.ProductsPath);
 
             foreach (HtmlNode amazonProductNode in amazonProductNodes)
