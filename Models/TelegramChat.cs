@@ -1,7 +1,10 @@
-﻿namespace ElAhorrador.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ElAhorrador.Models
 {
     public class TelegramChat
     {
+        [Key]
         public long Id { get; set; }
         public string ChatCommand { get; set; }
         public int ChatStep { get; set; }

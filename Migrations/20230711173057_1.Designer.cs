@@ -10,11 +10,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace ElAhorrador.Migrations
+namespace AmazonSuperOfertaBot.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20230711142037_6")]
-    partial class _6
+    [Migration("20230711173057_1")]
+    partial class _1
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -36,6 +36,9 @@ namespace ElAhorrador.Migrations
 
                     b.Property<DateTime>("CreatedTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
 
                     b.Property<List<decimal>>("Prices")
                         .HasColumnType("numeric[]");
