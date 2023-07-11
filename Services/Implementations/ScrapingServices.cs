@@ -1,9 +1,11 @@
-﻿using AmazonApi.Models;
+﻿using AmazonApi.Data;
+using AmazonApi.Models;
 using ElAhorrador.Data.Repositories.Interfaces;
 using ElAhorrador.Dtos;
 using ElAhorrador.Extensions;
 using ElAhorrador.Models;
 using HtmlAgilityPack;
+using Newtonsoft.Json;
 
 namespace AmazonApi.Services.Implementations
 {
@@ -11,11 +13,13 @@ namespace AmazonApi.Services.Implementations
     {
         private const string _euroSymbol = "€";
         private readonly IConfigurationRepository _configurationRepository;
+        private readonly DataContext _dataContext;
         private readonly ScrapingServicesConfiguration _scrapingServicesConfiguration;
 
-        public ScrapingServices(IConfigurationRepository configurationRepository)
+        public ScrapingServices(IConfigurationRepository configurationRepository, DataContext dataContext)
         {
             _configurationRepository = configurationRepository;
+            _dataContext = dataContext;
             _scrapingServicesConfiguration = configurationRepository.GetConfiguration<ScrapingServicesConfiguration>().Result;
         }
 
@@ -93,12 +97,14 @@ namespace AmazonApi.Services.Implementations
         }
 
 
-        private static async Task<HtmlDocument> GetHtmlDocument(string url)
+        private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
             HttpClient httpClient = new();
             HttpResponseMessage httpResponse = await httpClient.GetAsync(url);
             if (!httpResponse.IsSuccessStatusCode)
             {
+                _dataContext.Logs.Add(new() { Type = "Error", Data = JsonConvert.SerializeObject(httpResponse) });
+                await _dataContext.SaveChangesAsync();
                 return null;
             }
             string htmlPage = await httpResponse.Content.ReadAsStringAsync();
