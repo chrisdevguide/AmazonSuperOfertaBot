@@ -1,4 +1,5 @@
-﻿using ElAhorrador.Models;
+﻿using AmazonSuperOfertaBot.Models;
+using ElAhorrador.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace AmazonApi.Data
@@ -12,5 +13,6 @@ namespace AmazonApi.Data
         public DbSet<Configuration> Configurations { get; set; }
         public DbSet<TelegramChat> TelegramChats { get; set; }
         public DbSet<AmazonAlert> AmazonAlerts { get; set; }
+        public DbSet<Log> Logs { get; set; }
     }
 }

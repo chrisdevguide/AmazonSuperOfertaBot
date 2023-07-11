@@ -1,5 +1,6 @@
 using AmazonApi.Data;
 using AmazonApi.Services.Implementations;
+using AmazonSuperOfertaBot.Middlewares;
 using ElAhorrador.Data.Repositories.Implementations;
 using ElAhorrador.Data.Repositories.Interfaces;
 using ElAhorrador.Services.Implementations;
@@ -32,6 +33,7 @@ namespace AmazonApi
             app.UseSwagger();
             app.UseSwaggerUI();
 
+            app.UseMiddleware<ApiExceptionMiddleware>();
 
             app.UseHttpsRedirection();
 
