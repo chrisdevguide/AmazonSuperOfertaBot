@@ -32,6 +32,8 @@ namespace AmazonApi.Services.Implementations
             HtmlDocument htmlDocument = await GetHtmlDocument($"{scrapeConfiguration.SearchProductUrl}{request.SearchText}");
             if (htmlDocument is null) return null;
 
+            await _logsRepository.CreateLog("Info HtmlDocument Loaded", htmlDocument.ParsedText);
+
             HtmlNodeCollection amazonProductNodes = htmlDocument.DocumentNode.SelectNodes(scrapeConfiguration.ProductsPath);
             if (amazonProductNodes is null) return null;
 
@@ -97,49 +99,8 @@ namespace AmazonApi.Services.Implementations
 
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
-            HttpClient httpClient = new();
-            HttpResponseMessage response = await httpClient.GetAsync(url);
-            await _logsRepository.CreateLog("Info Response1 GetHtmlDocument ", response);
-
-
-            HttpClientHandler handler = new()
-            {
-                CookieContainer = new()
-            };
-
-            if (response.Headers.TryGetValues("Set-Cookies", out var cookieValues))
-            {
-                foreach (var cookie in cookieValues)
-                {
-                    handler.CookieContainer.SetCookies(new Uri(url), cookie);
-                }
-
-            }
-
-            HttpClient httpClientWithCookies = new(handler);
-
-            HttpResponseMessage httpResponse = await httpClientWithCookies.GetAsync(url);
-            if (!httpResponse.IsSuccessStatusCode)
-            {
-                await _logsRepository.CreateLog("Error", httpResponse);
-                return null;
-            };
-
-            await _logsRepository.CreateLog("Info Response2 GetHtmlDocument ", response);
-
-
-            string htmlPage = await httpResponse.Content.ReadAsStringAsync();
-
-            await _logsRepository.CreateLog("Info", htmlPage);
-
-            HtmlDocument htmlDocument = new();
-            htmlDocument.LoadHtml(htmlPage);
-
-
-            HtmlWeb web = new();
-            HtmlDocument doc = web.Load(url);
-
-            return doc;
+            HtmlWeb htmlWeb = new() { UserAgent = _scrapingServicesConfiguration.UserAgentHeader };
+            return await htmlWeb.LoadFromWebAsync(url);
         }
     }
 }
