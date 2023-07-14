@@ -34,6 +34,7 @@ namespace AmazonApi.Services.Implementations
             if (htmlDocument is null) return null;
 
             HtmlNodeCollection amazonProductNodes = htmlDocument.DocumentNode.SelectNodes(scrapeConfiguration.ProductsPath);
+            if (amazonProductNodes is null) return null;
 
             foreach (HtmlNode amazonProductNode in amazonProductNodes)
             {
@@ -75,6 +76,7 @@ namespace AmazonApi.Services.Implementations
             HtmlDocument htmlDocument = await GetHtmlDocument($"{scrapeProductConfiguration.SearchProductUrl}{asin}");
             if (htmlDocument is null) return null;
             HtmlNode amazonProductNode = htmlDocument.DocumentNode.SelectSingleNode(scrapeProductConfiguration.ProductPath);
+            if (amazonProductNode is null) return null;
 
             AmazonProduct amazonProduct = new()
             {
@@ -104,6 +106,7 @@ namespace AmazonApi.Services.Implementations
             await _logsRepository.CreateLog(new() { Type = "Error", Data = JsonConvert.SerializeObject(httpResponse) });
             if (!httpResponse.IsSuccessStatusCode) return null;
             string htmlPage = await httpResponse.Content.ReadAsStringAsync();
+            await _logsRepository.CreateLog(new() { Type = "Info", Data = JsonConvert.SerializeObject(htmlPage[..10000]) });
 
             HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(htmlPage);
