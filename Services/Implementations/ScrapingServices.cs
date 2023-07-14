@@ -98,9 +98,21 @@ namespace AmazonApi.Services.Implementations
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
             HttpClient httpClient = new();
-            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(_scrapingServicesConfiguration.UserAgentHeader);
+            HttpResponseMessage response = await httpClient.GetAsync(url);
+            IEnumerable<string> cookieValues = response.Headers.GetValues("Set-Cookie");
+            HttpClientHandler handler = new()
+            {
+                CookieContainer = new()
+            };
 
-            HttpResponseMessage httpResponse = await httpClient.GetAsync(url);
+            foreach (var cookie in cookieValues)
+            {
+                handler.CookieContainer.SetCookies(new Uri(url), cookie);
+            }
+
+            HttpClient httpClientWithCookies = new(handler);
+
+            HttpResponseMessage httpResponse = await httpClientWithCookies.GetAsync(url);
             if (!httpResponse.IsSuccessStatusCode)
             {
                 await _logsRepository.CreateLog("Error", httpResponse);
