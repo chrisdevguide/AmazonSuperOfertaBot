@@ -1,12 +1,11 @@
 ﻿using AmazonApi.Models;
 using AmazonSuperOfertaBot.Data.Repositories.Implementations;
+using AmazonSuperOfertaBot.Services.Implementations;
 using ElAhorrador.Data.Repositories.Interfaces;
 using ElAhorrador.Dtos;
 using ElAhorrador.Extensions;
 using ElAhorrador.Models;
 using HtmlAgilityPack;
-using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
 
 namespace AmazonApi.Services.Implementations
 {
@@ -31,7 +30,7 @@ namespace AmazonApi.Services.Implementations
 
             ScrapeConfiguration scrapeConfiguration = await _configurationRepository.GetConfiguration<ScrapeConfiguration>() ?? throw new ApiException("No configuration has been loaded.");
 
-            HtmlDocument htmlDocument = GetHtmlDocument($"{scrapeConfiguration.SearchProductUrl}{request.SearchText}");
+            HtmlDocument htmlDocument = await GetHtmlDocument($"{scrapeConfiguration.SearchProductUrl}{request.SearchText}");
             if (htmlDocument is null) return null;
 
             await _logsRepository.CreateLog("Info HtmlDocument Loaded", htmlDocument.ParsedText);
@@ -74,7 +73,7 @@ namespace AmazonApi.Services.Implementations
             if (string.IsNullOrEmpty(asin) || string.IsNullOrWhiteSpace(asin)) return null;
 
             ScrapeProductConfiguration scrapeProductConfiguration = await _configurationRepository.GetConfiguration<ScrapeProductConfiguration>() ?? throw new ApiException("No configuration has been loaded.");
-            HtmlDocument htmlDocument = GetHtmlDocument($"{scrapeProductConfiguration.SearchProductUrl}{asin}");
+            HtmlDocument htmlDocument = await GetHtmlDocument($"{scrapeProductConfiguration.SearchProductUrl}{asin}");
             if (htmlDocument is null) return null;
             HtmlNode amazonProductNode = htmlDocument.DocumentNode.SelectSingleNode(scrapeProductConfiguration.ProductPath);
             if (amazonProductNode is null) return null;
@@ -99,22 +98,20 @@ namespace AmazonApi.Services.Implementations
             return amazonProduct;
         }
 
-        private HtmlDocument GetHtmlDocument(string url)
+        private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
-            ChromeOptions options = new();
-            options.AddArgument("--headless");
-            using IWebDriver driver = new ChromeDriver(options)
-            {
-                Url = url
-            };
+            UserAgentGeneratorServices userAgentGeneratorServices = new();
+            HttpClient httpClient = new();
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(userAgentGeneratorServices.GenerateRandomUserAgent());
+            HttpResponseMessage httpResponse = await httpClient.GetAsync(url);
+            await _logsRepository.CreateLog("Error", httpResponse);
+            if (!httpResponse.IsSuccessStatusCode) return null;
+            string htmlPage = await httpResponse.Content.ReadAsStringAsync();
 
-            string html = driver.PageSource;
+            HtmlDocument htmlDocument = new();
+            htmlDocument.LoadHtml(htmlPage);
 
-            driver.Close();
-            driver.Quit();
-            HtmlDocument document = new();
-            document.LoadHtml(html);
-            return document;
+            return htmlDocument;
         }
     }
 }
