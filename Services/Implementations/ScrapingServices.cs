@@ -109,6 +109,8 @@ namespace AmazonApi.Services.Implementations
 
             string htmlPage = await httpResponse.Content.ReadAsStringAsync();
 
+            await _logsRepository.CreateLog("Info", htmlPage);
+
             HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(htmlPage);
 
