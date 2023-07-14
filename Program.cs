@@ -1,7 +1,6 @@
 using AmazonApi.Data;
 using AmazonApi.Services.Implementations;
 using AmazonSuperOfertaBot.Data.Repositories.Implementations;
-using AmazonSuperOfertaBot.Data.Repositories.Interfaces;
 using AmazonSuperOfertaBot.Middlewares;
 using ElAhorrador.Data.Repositories.Implementations;
 using ElAhorrador.Data.Repositories.Interfaces;
