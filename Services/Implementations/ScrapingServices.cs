@@ -1,11 +1,11 @@
 ﻿using AmazonApi.Models;
 using AmazonSuperOfertaBot.Data.Repositories.Implementations;
-using AmazonSuperOfertaBot.Services.Implementations;
 using ElAhorrador.Data.Repositories.Interfaces;
 using ElAhorrador.Dtos;
 using ElAhorrador.Extensions;
 using ElAhorrador.Models;
 using HtmlAgilityPack;
+using Sayaka.Common;
 
 namespace AmazonApi.Services.Implementations
 {
@@ -100,13 +100,18 @@ namespace AmazonApi.Services.Implementations
 
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
-            UserAgentGeneratorServices userAgentGeneratorServices = new();
+
             HttpClient httpClient = new();
-            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(userAgentGeneratorServices.GenerateRandomUserAgent());
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(ProviderFakeUserAgent.Random);
             HttpResponseMessage httpResponse = await httpClient.GetAsync(url);
-            await _logsRepository.CreateLog("Error", httpResponse);
-            if (!httpResponse.IsSuccessStatusCode) return null;
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                await _logsRepository.CreateLog("Error", httpResponse);
+                return null;
+            }
+
             string htmlPage = await httpResponse.Content.ReadAsStringAsync();
+            await _logsRepository.CreateLog("Info GetHtmlDocument", htmlPage);
 
             HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(htmlPage);
