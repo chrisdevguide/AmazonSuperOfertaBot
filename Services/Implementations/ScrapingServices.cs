@@ -1,5 +1,5 @@
-﻿using AmazonApi.Data;
-using AmazonApi.Models;
+﻿using AmazonApi.Models;
+using AmazonSuperOfertaBot.Data.Repositories.Interfaces;
 using ElAhorrador.Data.Repositories.Interfaces;
 using ElAhorrador.Dtos;
 using ElAhorrador.Extensions;
@@ -13,13 +13,13 @@ namespace AmazonApi.Services.Implementations
     {
         private const string _euroSymbol = "€";
         private readonly IConfigurationRepository _configurationRepository;
-        private readonly DataContext _dataContext;
+        private readonly ILogsRepository _logsRepository;
         private readonly ScrapingServicesConfiguration _scrapingServicesConfiguration;
 
-        public ScrapingServices(IConfigurationRepository configurationRepository, DataContext dataContext)
+        public ScrapingServices(IConfigurationRepository configurationRepository, ILogsRepository logsRepository)
         {
             _configurationRepository = configurationRepository;
-            _dataContext = dataContext;
+            _logsRepository = logsRepository;
             _scrapingServicesConfiguration = configurationRepository.GetConfiguration<ScrapingServicesConfiguration>().Result;
         }
 
@@ -39,9 +39,7 @@ namespace AmazonApi.Services.Implementations
             {
                 if (amazonProductNode is null) continue;
 
-
-                _dataContext.Logs.Add(new() { Type = "Info", Data = JsonConvert.SerializeObject(amazonProductNode) });
-                await _dataContext.SaveChangesAsync();
+                await _logsRepository.CreateLog(new() { Type = "Info", Data = JsonConvert.SerializeObject(amazonProductNode) });
 
                 AmazonProduct amazonProduct = new()
                 {
@@ -80,8 +78,7 @@ namespace AmazonApi.Services.Implementations
             if (htmlDocument is null) return null;
             HtmlNode amazonProductNode = htmlDocument.DocumentNode.SelectSingleNode(scrapeProductConfiguration.ProductPath);
 
-            _dataContext.Logs.Add(new() { Type = "Info", Data = JsonConvert.SerializeObject(amazonProductNode) });
-            await _dataContext.SaveChangesAsync();
+            await _logsRepository.CreateLog(new() { Type = "Info", Data = JsonConvert.SerializeObject(amazonProductNode) });
 
             AmazonProduct amazonProduct = new()
             {
@@ -108,12 +105,8 @@ namespace AmazonApi.Services.Implementations
         {
             HttpClient httpClient = new();
             HttpResponseMessage httpResponse = await httpClient.GetAsync(url);
-            if (!httpResponse.IsSuccessStatusCode)
-            {
-                _dataContext.Logs.Add(new() { Type = "Error", Data = JsonConvert.SerializeObject(httpResponse) });
-                await _dataContext.SaveChangesAsync();
-                return null;
-            }
+            await _logsRepository.CreateLog(new() { Type = "Error", Data = JsonConvert.SerializeObject(httpResponse) });
+            if (!httpResponse.IsSuccessStatusCode) return null;
             string htmlPage = await httpResponse.Content.ReadAsStringAsync();
 
             HtmlDocument htmlDocument = new();

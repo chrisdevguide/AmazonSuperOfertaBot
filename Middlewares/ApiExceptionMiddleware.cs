@@ -1,4 +1,4 @@
-﻿using AmazonApi.Data;
+﻿using AmazonSuperOfertaBot.Data.Repositories.Interfaces;
 using ElAhorrador.Dtos;
 using Newtonsoft.Json;
 
@@ -8,13 +8,13 @@ namespace AmazonSuperOfertaBot.Middlewares
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<ApiExceptionMiddleware> _logger;
-        private readonly DataContext _dataContext;
+        private readonly ILogsRepository _logsRepository;
 
-        public ApiExceptionMiddleware(RequestDelegate next, ILogger<ApiExceptionMiddleware> logger, IServiceProvider serviceProvider)
+        public ApiExceptionMiddleware(RequestDelegate next, ILogger<ApiExceptionMiddleware> logger, IServiceProvider serviceProvider, ILogsRepository logsRepository)
         {
             _next = next;
             _logger = logger;
-            _dataContext = serviceProvider.CreateScope().ServiceProvider.GetRequiredService<DataContext>();
+            _logsRepository = logsRepository;
         }
 
         public async Task InvokeAsync(HttpContext httpContext)
@@ -37,13 +37,11 @@ namespace AmazonSuperOfertaBot.Middlewares
                     },
                 };
 
-                _dataContext.Logs.Add(new()
+                await _logsRepository.CreateLog(new()
                 {
                     Type = "Error",
                     Data = JsonConvert.SerializeObject(ex),
                 });
-
-                await _dataContext.SaveChangesAsync();
 
                 httpContext.Response.StatusCode = apiExceptionDto.StatusCode;
                 string json = JsonConvert.SerializeObject(apiExceptionDto);
