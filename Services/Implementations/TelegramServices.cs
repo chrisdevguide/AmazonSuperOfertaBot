@@ -1,6 +1,7 @@
 ﻿using AmazonApi.Data;
 using AmazonApi.Models;
 using AmazonApi.Services.Implementations;
+using AmazonSuperOfertaBot.Data.Repositories.Interfaces;
 using ElAhorrador.Data.Repositories.Implementations;
 using ElAhorrador.Data.Repositories.Interfaces;
 using ElAhorrador.Dtos;
@@ -24,9 +25,10 @@ namespace ElAhorrador.Services.Implementations
         private readonly IScrapingServices _scrapingServices;
         private readonly IAmazonAlertRepository _amazonAlertRepository;
         private readonly DataContext _dataContext;
+        private readonly ILogsRepository _logsRepository;
 
         public TelegramServices(IConfigurationRepository configurationRepository, ITelegramChatRepository telegramChatRepository, IScrapingServices scrapingServices,
-            IAmazonAlertRepository amazonAlertRepository, DataContext dataContext)
+            IAmazonAlertRepository amazonAlertRepository, DataContext dataContext, ILogsRepository logsRepository)
         {
             _telegramConfiguration = configurationRepository.GetConfiguration<TelegramConfiguration>().Result;
             _botClient = new(_telegramConfiguration.ApiKey);
@@ -34,6 +36,7 @@ namespace ElAhorrador.Services.Implementations
             _scrapingServices = scrapingServices;
             _amazonAlertRepository = amazonAlertRepository;
             _dataContext = dataContext;
+            _logsRepository = logsRepository;
         }
 
         public void StartBot()
@@ -386,13 +389,11 @@ namespace ElAhorrador.Services.Implementations
 
         async Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
-            _dataContext.Logs.Add(new()
+            await _logsRepository.CreateLog(new()
             {
                 Type = "Error",
                 Data = JsonConvert.SerializeObject(exception),
             });
-
-            await _dataContext.SaveChangesAsync();
         }
 
         private async Task SendAmazonProduct(AmazonProduct amazonProduct, string chatId)
@@ -419,7 +420,13 @@ namespace ElAhorrador.Services.Implementations
             alerts.ForEach(async alert =>
             {
                 AmazonProduct amazonProduct = await _scrapingServices.ScrapeProduct(alert.ProductAsin);
-                if (amazonProduct.CurrentPrice != alert.Prices.Last())
+                if (amazonProduct is null)
+                {
+                    await _botClient.SendTextMessageAsync(alert.ChatId, $"Hola, el producto con ASIN '{alert.ProductAsin}' ya no es disponible en Amazon. Se ha borrado la correspondiente alerta con nombre '{alert.Name}'.");
+                    await _amazonAlertRepository.DeleteAmazonAlert(alert.Id);
+                    return;
+                }
+                if (amazonProduct?.CurrentPrice != alert.Prices.Last())
                 {
                     await _botClient.SendTextMessageAsync(alert.ChatId, $"Hola, el precio del producto con ASIN '{alert.ProductAsin}' ha cambiado. El precio anterior era de {alert.Prices.Last()}€ mientras ahora es de {amazonProduct.CurrentPrice}€.");
                     await SendAmazonProduct(amazonProduct, alert.ChatId);
