@@ -102,11 +102,12 @@ namespace AmazonApi.Services.Implementations
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
             HttpClient httpClient = new();
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");
             HttpResponseMessage httpResponse = await httpClient.GetAsync(url);
             await _logsRepository.CreateLog(new() { Type = "Error", Data = JsonConvert.SerializeObject(httpResponse) });
             if (!httpResponse.IsSuccessStatusCode) return null;
             string htmlPage = await httpResponse.Content.ReadAsStringAsync();
-            await _logsRepository.CreateLog(new() { Type = "Info", Data = JsonConvert.SerializeObject(htmlPage[..10000]) });
+            await _logsRepository.CreateLog(new() { Type = "Info", Data = JsonConvert.SerializeObject(htmlPage) });
 
             HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(htmlPage);
