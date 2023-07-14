@@ -214,6 +214,7 @@ namespace ElAhorrador.Services.Implementations
                         await _telegramChatRepository.UpdateTelegramChat(telegramChat);
                         break;
                     case (int)CreateAlertTelegramChatSteps.AskForProductAsin:
+                        await botClient.SendTextMessageAsync(chatId, $"Creando...", cancellationToken: cancellationToken);
                         if (await _amazonAlertRepository.AmazonAlertExists(telegramChat.Id, receivedText))
                         {
                             await botClient.SendTextMessageAsync(chatId, $"Una alerta por este producto ya existe. La creación de la alerta ha terminado.", cancellationToken: cancellationToken);

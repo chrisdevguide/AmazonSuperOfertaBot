@@ -39,8 +39,6 @@ namespace AmazonApi.Services.Implementations
             {
                 if (amazonProductNode is null) continue;
 
-                await _logsRepository.CreateLog(new() { Type = "Info", Data = JsonConvert.SerializeObject(amazonProductNode) });
-
                 AmazonProduct amazonProduct = new()
                 {
                     Asin = amazonProductNode.GetAttributeValue(scrapeConfiguration.AsinPath, null),
@@ -77,8 +75,6 @@ namespace AmazonApi.Services.Implementations
             HtmlDocument htmlDocument = await GetHtmlDocument($"{scrapeProductConfiguration.SearchProductUrl}{asin}");
             if (htmlDocument is null) return null;
             HtmlNode amazonProductNode = htmlDocument.DocumentNode.SelectSingleNode(scrapeProductConfiguration.ProductPath);
-
-            await _logsRepository.CreateLog(new() { Type = "Info", Data = JsonConvert.SerializeObject(amazonProductNode) });
 
             AmazonProduct amazonProduct = new()
             {
