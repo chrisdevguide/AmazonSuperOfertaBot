@@ -397,6 +397,7 @@ namespace ElAhorrador.Services.Implementations
                             }
                             break;
                         case (int)AdminTelegramChatSteps.SendProductToChannel:
+                            await botClient.SendTextMessageAsync(chatId, $"Enviando...", cancellationToken: cancellationToken);
                             AmazonProduct amazonProduct = await _scrapingServices.ScrapeProduct(receivedText);
                             if (amazonProduct is null)
                             {

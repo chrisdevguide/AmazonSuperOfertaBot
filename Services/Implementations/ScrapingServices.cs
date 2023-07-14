@@ -99,15 +99,21 @@ namespace AmazonApi.Services.Implementations
         {
             HttpClient httpClient = new();
             HttpResponseMessage response = await httpClient.GetAsync(url);
-            IEnumerable<string> cookieValues = response.Headers.GetValues("Set-Cookie");
+            await _logsRepository.CreateLog("Info Response1 GetHtmlDocument ", response);
+
+
             HttpClientHandler handler = new()
             {
                 CookieContainer = new()
             };
 
-            foreach (var cookie in cookieValues)
+            if (response.Headers.TryGetValues("Set-Cookies", out var cookieValues))
             {
-                handler.CookieContainer.SetCookies(new Uri(url), cookie);
+                foreach (var cookie in cookieValues)
+                {
+                    handler.CookieContainer.SetCookies(new Uri(url), cookie);
+                }
+
             }
 
             HttpClient httpClientWithCookies = new(handler);
@@ -119,6 +125,9 @@ namespace AmazonApi.Services.Implementations
                 return null;
             };
 
+            await _logsRepository.CreateLog("Info Response2 GetHtmlDocument ", response);
+
+
             string htmlPage = await httpResponse.Content.ReadAsStringAsync();
 
             await _logsRepository.CreateLog("Info", htmlPage);
@@ -126,7 +135,11 @@ namespace AmazonApi.Services.Implementations
             HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(htmlPage);
 
-            return htmlDocument;
+
+            HtmlWeb web = new();
+            HtmlDocument doc = web.Load(url);
+
+            return doc;
         }
     }
 }
