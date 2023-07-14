@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using ElAhorrador.Extensions;
+using System.ComponentModel.DataAnnotations;
 
 namespace AmazonApi.Models
 {
@@ -10,6 +11,7 @@ namespace AmazonApi.Models
         public decimal CurrentPrice { get; set; }
         public decimal OriginalPrice { get; set; }
         public decimal Discount { get; set; }
+        public decimal AmountDiscounted { get; set; }
         public List<decimal> PreviousPrices { get; set; } = new();
         public int ReviewsCount { get; set; }
         public decimal Stars { get; set; }
@@ -25,9 +27,22 @@ namespace AmazonApi.Models
             {
                 decimal discount = ((OriginalPrice - CurrentPrice) / OriginalPrice) * 100;
                 Discount = Math.Round(discount, 2);
+                AmountDiscounted = OriginalPrice - CurrentPrice;
             }
         }
 
         public bool IsValid() => !string.IsNullOrEmpty(Asin);
+
+        public static decimal ParsePrice(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return 0;
+            value = value.ReplaceCommaForDot();
+            if (value.Split(".").Length > 2)
+            {
+                value = value.RemoveFirstDot();
+            }
+            if (!decimal.TryParse(value, out decimal parsedValue)) return 0;
+            return parsedValue;
+        }
     }
 }

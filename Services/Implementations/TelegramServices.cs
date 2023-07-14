@@ -1,5 +1,4 @@
-﻿using AmazonApi.Data;
-using AmazonApi.Models;
+﻿using AmazonApi.Models;
 using AmazonApi.Services.Implementations;
 using AmazonSuperOfertaBot.Data.Repositories.Implementations;
 using ElAhorrador.Data.Repositories.Implementations;
@@ -24,18 +23,16 @@ namespace ElAhorrador.Services.Implementations
         private readonly ITelegramChatRepository _telegramChatRepository;
         private readonly IScrapingServices _scrapingServices;
         private readonly IAmazonAlertRepository _amazonAlertRepository;
-        private readonly DataContext _dataContext;
         private readonly ILogsRepository _logsRepository;
 
         public TelegramServices(IConfigurationRepository configurationRepository, ITelegramChatRepository telegramChatRepository, IScrapingServices scrapingServices,
-            IAmazonAlertRepository amazonAlertRepository, DataContext dataContext, ILogsRepository logsRepository)
+            IAmazonAlertRepository amazonAlertRepository, ILogsRepository logsRepository)
         {
             _telegramConfiguration = configurationRepository.GetConfiguration<TelegramConfiguration>().Result;
             _botClient = new(_telegramConfiguration.ApiKey);
             _telegramChatRepository = telegramChatRepository;
             _scrapingServices = scrapingServices;
             _amazonAlertRepository = amazonAlertRepository;
-            _dataContext = dataContext;
             _logsRepository = logsRepository;
         }
 
@@ -58,6 +55,13 @@ namespace ElAhorrador.Services.Implementations
                 {
                     await _telegramChatRepository.DeleteTelegramChat(telegramChat.Id);
                     telegramChat = null;
+                }
+
+                if (receivedText == _telegramConfiguration.ExitCommand)
+                {
+                    if (telegramChat is not null) await _telegramChatRepository.DeleteTelegramChat(telegramChat.Id);
+                    await botClient.SendTextMessageAsync(chatId, "Se ha reiniciado la conversación.", cancellationToken: cancellationToken);
+                    return;
                 }
 
                 telegramChat ??= new()
@@ -137,9 +141,32 @@ namespace ElAhorrador.Services.Implementations
                             }
                             scrapeRequestDto = scrapeRequestDto with { MinimumStars = parsedStars };
                             telegramChat.Data = JsonConvert.SerializeObject(scrapeRequestDto);
-                            telegramChat.ChatStep = (int)ScrapeTelegramChatSteps.ReadyToAdvancedSearch;
-                            await botClient.SendTextMessageAsync(chatId, $"Ahora indica el numero de reseñas mínimo que un producto debe tener. Insertar un valor númerico.", cancellationToken: cancellationToken);
+                            telegramChat.ChatStep = (int)ScrapeTelegramChatSteps.AskForProductNameMustContainKeyword;
                             await _telegramChatRepository.UpdateTelegramChat(telegramChat);
+                            await botClient.SendTextMessageAsync(chatId, $"Ahora indica el numero de reseñas mínimo que un producto debe tener. Insertar un valor númerico.", cancellationToken: cancellationToken);
+                            break;
+                        case (int)ScrapeTelegramChatSteps.AskForProductNameMustContainKeyword:
+                            if (!int.TryParse(receivedText, out int parsedReviews) || parsedReviews < 0 || parsedReviews > 1000000)
+                            {
+                                await botClient.SendTextMessageAsync(chatId, $"Valor no válido. Busqueda terminada.", cancellationToken: cancellationToken);
+                                await _telegramChatRepository.DeleteTelegramChat(telegramChat.Id);
+                                return;
+                            }
+                            scrapeRequestDto = JsonConvert.DeserializeObject<ScrapeRequestDto>(telegramChat.Data);
+                            scrapeRequestDto = scrapeRequestDto with { MinimumReviews = parsedReviews };
+                            telegramChat.Data = JsonConvert.SerializeObject(scrapeRequestDto);
+                            telegramChat.ChatStep = (int)ScrapeTelegramChatSteps.ReadyToAdvancedSearch;
+                            await _telegramChatRepository.UpdateTelegramChat(telegramChat);
+                            textToSend = "Por ultimo, el nombre del producto debe contener la palabra clave por la cual se va a buscar?";
+                            inlineKeyboard = new(new[]
+                                       {
+                                    new[]
+                                    {
+                                        InlineKeyboardButton.WithCallbackData("Sí", "true"),
+                                        InlineKeyboardButton.WithCallbackData("No", "false")
+                                    }
+                                });
+                            await botClient.SendTextMessageAsync(chatId, textToSend, replyMarkup: inlineKeyboard, cancellationToken: cancellationToken);
                             break;
                         case (int)ScrapeTelegramChatSteps.ReadyToSimpleSearch:
                             await SendSearchingWaitingMessage(telegramChat.Id);
@@ -151,15 +178,15 @@ namespace ElAhorrador.Services.Implementations
                             await _telegramChatRepository.DeleteTelegramChat(telegramChat.Id);
                             break;
                         case (int)ScrapeTelegramChatSteps.ReadyToAdvancedSearch:
-                            await SendSearchingWaitingMessage(telegramChat.Id);
-                            scrapeRequestDto = JsonConvert.DeserializeObject<ScrapeRequestDto>(telegramChat.Data);
-                            if (!int.TryParse(receivedText, out int parsedReviews) || parsedReviews < 0 || parsedReviews > 1000000)
+                            if (!bool.TryParse(receivedText, out parsedText))
                             {
                                 await botClient.SendTextMessageAsync(chatId, $"Valor no válido. Busqueda terminada.", cancellationToken: cancellationToken);
                                 await _telegramChatRepository.DeleteTelegramChat(telegramChat.Id);
                                 return;
                             }
-                            scrapeRequestDto = scrapeRequestDto with { MinimumReviews = parsedReviews };
+                            await SendSearchingWaitingMessage(telegramChat.Id);
+                            scrapeRequestDto = JsonConvert.DeserializeObject<ScrapeRequestDto>(telegramChat.Data);
+                            scrapeRequestDto = scrapeRequestDto with { MustContainSearchText = parsedText };
                             amazonProducts = await _scrapingServices.Scrape(scrapeRequestDto);
                             await botClient.SendTextMessageAsync(chatId, $"Se han encontrado {amazonProducts.Count} productos. Los productos se ordenan por descuento de mayor a menor.", cancellationToken: cancellationToken);
                             await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
@@ -388,26 +415,26 @@ namespace ElAhorrador.Services.Implementations
                     await botClient.SendTextMessageAsync(chatId, "Por favor, enviar un comando válido.", cancellationToken: cancellationToken);
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                throw;
+                await _logsRepository.CreateLog("Error", e);
             }
         }
 
         async Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
-            await _logsRepository.CreateLog("Error", exception);
+            await Task.CompletedTask;
         }
 
         private async Task SendAmazonProduct(AmazonProduct amazonProduct, string chatId)
         {
             string textToSend = $"<b>{amazonProduct.Name}</b>\n\n" +
-                                $"<b>Precio</b>: {(amazonProduct.Discount > 0 ? $"<b><s>{amazonProduct.OriginalPrice}</s></b> ---> " : "")}<b>{amazonProduct.CurrentPrice}</b>\n" +
-                                $"<b>Descuento</b>: {amazonProduct.Discount}%\n" +
-                                $"<b>Estrellas</b>: {amazonProduct.Stars}\n" +
-                                $"<b>Numero de reseñas</b>: {amazonProduct.ReviewsCount}\n" +
-                                $"<b>ASIN</b>: {amazonProduct.Asin}\n" +
-                                $"<a href='{amazonProduct.ProductUrl}'>Compra ahora!</a>";
+                                $"<a href='{amazonProduct.ProductUrl}'>🔗 Ver en Amazon</a>\n\n" +
+                                $"🏷 Precio: {(amazonProduct.Discount > 0 ? $"<b><s>{amazonProduct.OriginalPrice}€</s></b> 👉 " : "")}<b>{amazonProduct.CurrentPrice}€</b>\n\n" +
+                                $"{(amazonProduct.Discount > 0 ? $"💰 Descuento del <b>{amazonProduct.Discount}% (-{amazonProduct.AmountDiscounted}€)</b>\n\n" : "")}" +
+                                $"🏆 Estrellas: <b>{amazonProduct.Stars}/5</b> {new string('⭐', (int)amazonProduct.Stars)}\n\n" +
+                                $"✍️ Numero de Reseñas: <b>{amazonProduct.ReviewsCount}</b>\n\n" +
+                                $"🔍 ASIN: <b>{amazonProduct.Asin}</b>";
 
             await _botClient.SendPhotoAsync(chatId, InputFile.FromUri(amazonProduct.ImageUrl), caption: textToSend, parseMode: ParseMode.Html);
         }

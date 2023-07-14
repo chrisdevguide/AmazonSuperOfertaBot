@@ -18,7 +18,7 @@ namespace ElAhorrador.Dtos
             if (amazonProduct.Stars < MinimumStars) return false;
             if (amazonProduct.ReviewsCount < MinimumReviews) return false;
             if (ProductsWithStock && !amazonProduct.HasStock) return false;
-            if (MustContainSearchText && !amazonProduct.Name.Contains(SearchText, StringComparison.InvariantCultureIgnoreCase)) return false;
+            if (MustContainSearchText && !SearchText.Split().ToList().TrueForAll(s => amazonProduct.Name.Contains(s, StringComparison.InvariantCultureIgnoreCase))) return false;
             return true;
 
         }

@@ -9,6 +9,7 @@
         public string CreateAlertCommand { get; set; }
         public string EditAlertsCommand { get; set; }
         public string AdminCommand { get; set; }
+        public string ExitCommand { get; set; }
         public byte[] AdminPassword { get; set; }
         public byte[] AdminPasswordHash { get; set; }
     }

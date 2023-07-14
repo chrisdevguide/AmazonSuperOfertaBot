@@ -9,6 +9,7 @@
         AskForMinimumDiscountAdvancedSearch,
         AskForMinimumStarsAdvancedSearch,
         AskForMinimumReviewsAdvancedSearch,
+        AskForProductNameMustContainKeyword,
         ReadyToSimpleSearch,
         ReadyToAdvancedSearch,
     }
