@@ -1,11 +1,10 @@
 ﻿using AmazonApi.Models;
-using AmazonSuperOfertaBot.Data.Repositories.Interfaces;
+using AmazonSuperOfertaBot.Data.Repositories.Implementations;
 using ElAhorrador.Data.Repositories.Interfaces;
 using ElAhorrador.Dtos;
 using ElAhorrador.Extensions;
 using ElAhorrador.Models;
 using HtmlAgilityPack;
-using Newtonsoft.Json;
 
 namespace AmazonApi.Services.Implementations
 {
@@ -38,8 +37,6 @@ namespace AmazonApi.Services.Implementations
 
             foreach (HtmlNode amazonProductNode in amazonProductNodes)
             {
-                if (amazonProductNode is null) continue;
-
                 AmazonProduct amazonProduct = new()
                 {
                     Asin = amazonProductNode.GetAttributeValue(scrapeConfiguration.AsinPath, null),
@@ -88,7 +85,7 @@ namespace AmazonApi.Services.Implementations
                 ReviewsCount = int.TryParse(amazonProductNode.SelectSingleNode(scrapeProductConfiguration.ReviewsCountPath)?.InnerText.Split()[0].Replace(".", ""), out int reviewsCount) ? reviewsCount : 0,
                 HasStock = amazonProductNode.SelectSingleNode(scrapeProductConfiguration.HasStockPath) is null,
                 ImageUrl = amazonProductNode.SelectSingleNode(scrapeProductConfiguration.ImageUrlPath)?.GetAttributeValue("src", null),
-                ProductUrl = $"{_scrapingServicesConfiguration.BaseProductUrl}{asin}"
+                ProductUrl = $"{_scrapingServicesConfiguration.BaseProductUrl}{asin}?tag={_scrapingServicesConfiguration.AffiliateName}"
             };
 
             amazonProduct.CalculateDiscount();
@@ -98,16 +95,19 @@ namespace AmazonApi.Services.Implementations
             return amazonProduct;
         }
 
-
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
             HttpClient httpClient = new();
-            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(_scrapingServicesConfiguration.UserAgentHeader);
 
             HttpResponseMessage httpResponse = await httpClient.GetAsync(url);
-            if (!httpResponse.IsSuccessStatusCode) return null;
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                await _logsRepository.CreateLog("Error", httpResponse);
+                return null;
+            };
+
             string htmlPage = await httpResponse.Content.ReadAsStringAsync();
-            await _logsRepository.CreateLog(new() { Type = "Info", Data = JsonConvert.SerializeObject(htmlPage) });
 
             HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(htmlPage);

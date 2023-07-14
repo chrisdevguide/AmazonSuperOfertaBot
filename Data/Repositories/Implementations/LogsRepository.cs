@@ -1,7 +1,7 @@
 ﻿using AmazonApi.Data;
-using AmazonSuperOfertaBot.Data.Repositories.Interfaces;
 using AmazonSuperOfertaBot.Models;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace AmazonSuperOfertaBot.Data.Repositories.Implementations
 {
@@ -19,9 +19,9 @@ namespace AmazonSuperOfertaBot.Data.Repositories.Implementations
             return await _dataContext.Logs.FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task CreateLog(Log Log)
+        public async Task CreateLog(string type, object data)
         {
-            _dataContext.Logs.Add(Log);
+            _dataContext.Logs.Add(new() { Type = type, Data = JsonConvert.SerializeObject(data) });
             await _dataContext.SaveChangesAsync();
         }
 
