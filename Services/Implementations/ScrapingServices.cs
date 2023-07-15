@@ -153,7 +153,11 @@ namespace AmazonApi.Services.Implementations
             //await _logsRepository.CreateLog("Info GetHtmlDocument Headers", headers);
             //await _logsRepository.CreateLog("Info GetHtmlDocument Cookies", cookies);
 
-            ScrapingBrowser scrapingBrowser = new();
+            ScrapingBrowser scrapingBrowser = new()
+            {
+                IgnoreCookies = true,
+                Timeout = TimeSpan.FromMinutes(15)
+            };
             if (!string.IsNullOrEmpty(_scrapingServicesConfiguration.UserAgentHeader)) scrapingBrowser.Headers["User-Agent"] = _scrapingServicesConfiguration.UserAgentHeader;
             string htmlPage = scrapingBrowser.NavigateToPage(new Uri(url));
 
