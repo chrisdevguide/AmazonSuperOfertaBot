@@ -5,7 +5,6 @@ using ElAhorrador.Dtos;
 using ElAhorrador.Extensions;
 using ElAhorrador.Models;
 using HtmlAgilityPack;
-using Sayaka.Common;
 
 namespace AmazonApi.Services.Implementations
 {
@@ -102,16 +101,29 @@ namespace AmazonApi.Services.Implementations
         {
 
             HttpClient httpClient = new();
-            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(ProviderFakeUserAgent.Random);
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(_scrapingServicesConfiguration.UserAgentHeader);
             HttpResponseMessage httpResponse = await httpClient.GetAsync(url);
-            if (!httpResponse.IsSuccessStatusCode)
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                await _logsRepository.CreateLog("Info GetHtmlDocument", httpResponse);
+            }
+            else
             {
                 await _logsRepository.CreateLog("Error", httpResponse);
                 return null;
             }
 
             string htmlPage = await httpResponse.Content.ReadAsStringAsync();
-            await _logsRepository.CreateLog("Info GetHtmlDocument", htmlPage);
+            await _logsRepository.CreateLog("Info GetHtmlDocument html", htmlPage);
+
+            string headers = "";
+            foreach (var header in httpClient.DefaultRequestHeaders)
+            {
+                headers += $"Key={header.Key}, Value={string.Join(", ", header.Value)}\n";
+            }
+
+            await _logsRepository.CreateLog("Info GetHtmlDocument Headers", headers);
+
 
             HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(htmlPage);
