@@ -5,6 +5,7 @@ using ElAhorrador.Dtos;
 using ElAhorrador.Extensions;
 using ElAhorrador.Models;
 using HtmlAgilityPack;
+using System.Net;
 
 namespace AmazonApi.Services.Implementations
 {
@@ -99,9 +100,18 @@ namespace AmazonApi.Services.Implementations
 
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
+            // Create an instance of HttpClientHandler
+            HttpClientHandler handler = new()
+            {
+                // Configure the handler to accept cookies
+                CookieContainer = new CookieContainer(),
+                UseCookies = true
+            };
 
-            HttpClient httpClient = new();
-            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(_scrapingServicesConfiguration.UserAgentHeader);
+            // Create an instance of HttpClient with the configured handler
+            HttpClient httpClient = new(handler);
+            if (!string.IsNullOrEmpty(_scrapingServicesConfiguration.UserAgentHeader)) httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(_scrapingServicesConfiguration.UserAgentHeader);
+
             HttpResponseMessage httpResponse = await httpClient.GetAsync(url);
             if (httpResponse.IsSuccessStatusCode)
             {
@@ -115,14 +125,25 @@ namespace AmazonApi.Services.Implementations
 
             string htmlPage = await httpResponse.Content.ReadAsStringAsync();
             await _logsRepository.CreateLog("Info GetHtmlDocument html", htmlPage);
-
+            httpResponse.Headers.TryGetValues("Set-Cookie", out var cookieValues);
             string headers = "";
             foreach (var header in httpClient.DefaultRequestHeaders)
             {
                 headers += $"Key={header.Key}, Value={string.Join(", ", header.Value)}\n";
             }
 
+            string cookies = "";
+            if (cookieValues is not null)
+            {
+                foreach (var cookie in cookieValues)
+                {
+                    cookies += $"Value={cookie}, ";
+                }
+            }
+
+
             await _logsRepository.CreateLog("Info GetHtmlDocument Headers", headers);
+            await _logsRepository.CreateLog("Info GetHtmlDocument Cookies", cookies);
 
 
             HtmlDocument htmlDocument = new();
