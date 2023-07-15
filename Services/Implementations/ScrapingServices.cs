@@ -159,7 +159,7 @@ namespace AmazonApi.Services.Implementations
 
             HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(htmlPage);
-
+            await _logsRepository.CreateLog("Info GetHtmlDocument Html", htmlPage);
             return htmlDocument;
         }
     }
