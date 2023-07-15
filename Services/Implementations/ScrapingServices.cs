@@ -100,16 +100,19 @@ namespace AmazonApi.Services.Implementations
 
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
-            // Create an instance of HttpClientHandler
+            CookieContainer cookieContainer = new();
+            _scrapingServicesConfiguration.Cookies.ForEach(x => cookieContainer.SetCookies(new Uri("https://www.amazon.es"), x));
+
             HttpClientHandler handler = new()
             {
-                // Configure the handler to accept cookies
-                CookieContainer = new CookieContainer(),
+                CookieContainer = cookieContainer,
                 UseCookies = true
             };
 
+
             // Create an instance of HttpClient with the configured handler
             HttpClient httpClient = new(handler);
+
             if (!string.IsNullOrEmpty(_scrapingServicesConfiguration.UserAgentHeader)) httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(_scrapingServicesConfiguration.UserAgentHeader);
 
             HttpResponseMessage httpResponse = await httpClient.GetAsync(url);
@@ -126,6 +129,7 @@ namespace AmazonApi.Services.Implementations
             string htmlPage = await httpResponse.Content.ReadAsStringAsync();
             await _logsRepository.CreateLog("Info GetHtmlDocument html", htmlPage);
             httpResponse.Headers.TryGetValues("Set-Cookie", out var cookieValues);
+
             string headers = "";
             foreach (var header in httpClient.DefaultRequestHeaders)
             {
