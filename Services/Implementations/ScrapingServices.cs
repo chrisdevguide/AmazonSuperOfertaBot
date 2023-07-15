@@ -5,7 +5,6 @@ using ElAhorrador.Dtos;
 using ElAhorrador.Extensions;
 using ElAhorrador.Models;
 using HtmlAgilityPack;
-using ScrapySharp.Network;
 
 namespace AmazonApi.Services.Implementations
 {
@@ -153,17 +152,25 @@ namespace AmazonApi.Services.Implementations
             //await _logsRepository.CreateLog("Info GetHtmlDocument Headers", headers);
             //await _logsRepository.CreateLog("Info GetHtmlDocument Cookies", cookies);
 
-            ScrapingBrowser scrapingBrowser = new()
-            {
-                IgnoreCookies = true,
-                Timeout = TimeSpan.FromMinutes(15)
-            };
-            if (!string.IsNullOrEmpty(_scrapingServicesConfiguration.UserAgentHeader)) scrapingBrowser.Headers["User-Agent"] = _scrapingServicesConfiguration.UserAgentHeader;
-            string htmlPage = scrapingBrowser.NavigateToPage(new Uri(url));
+            HttpClient httpClient = new HttpClient();
+
+            // Prepare the form data
+            var formData = new Dictionary<string, string>
+                {
+                    { "path", url }
+                };
+            HttpContent content = new FormUrlEncodedContent(formData);
+
+
+            // Send the POST request and handle the response
+            HttpResponseMessage response = await httpClient.PostAsync(url, content);
+
+            // Read the response content
+            string responseContent = await response.Content.ReadAsStringAsync();
 
             HtmlDocument htmlDocument = new();
-            htmlDocument.LoadHtml(htmlPage);
-            await _logsRepository.CreateLog("Info GetHtmlDocument Html", htmlPage);
+            htmlDocument.LoadHtml(responseContent);
+            await _logsRepository.CreateLog("Info GetHtmlDocument Html", responseContent);
             return htmlDocument;
         }
     }
