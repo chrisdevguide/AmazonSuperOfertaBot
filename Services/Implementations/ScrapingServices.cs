@@ -39,6 +39,7 @@ namespace AmazonApi.Services.Implementations
 
             foreach (HtmlNode amazonProductNode in amazonProductNodes)
             {
+                var a = amazonProductNode.SelectSingleNode(scrapeConfiguration.CurrentPricePath)?.InnerText;
                 AmazonProduct amazonProduct = new()
                 {
                     Asin = amazonProductNode.GetAttributeValue(scrapeConfiguration.AsinPath, null),
@@ -99,78 +100,39 @@ namespace AmazonApi.Services.Implementations
 
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
-            //CookieContainer cookieContainer = new();
-            //_scrapingServicesConfiguration.Cookies.ForEach(x => cookieContainer.SetCookies(new Uri("https://www.amazon.es"), x));
+            var client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("authority", "www.amazon.es");
+            request.Headers.Add("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
+            request.Headers.Add("accept-language", "en-GB,en-US;q=0.9,en;q=0.8,es;q=0.7");
+            request.Headers.Add("cache-control", "max-age=0");
+            request.Headers.Add("cookie", "ubid-acbes=259-0337921-0383406; session-id=261-3401301-9939462; csd-key=eyJ3YXNtVGVzdGVkIjp0cnVlLCJ3YXNtQ29tcGF0aWJsZSI6dHJ1ZSwid2ViQ3J5cHRvVGVzdGVkIjpmYWxzZSwidiI6MSwia2lkIjoiN2Q1YTY4Iiwia2V5IjoiQXR4VTF3WkJnQXlOcDAySjBGUnc1QjJMTFpPOEhMYlhUL05YVXJxMmtqeUExU3hDMHc2SWdXZDl4SE1Nek1VQUF2bEk3cmlyYUJsRVp2NHBUMUN1OVRFRkFHQWU0dE56anliOXlMVjVSTTJjRmlaUXVGNmNoSnM0Nm1zb1RHTEc1dS9wU0hJd2xxcHZ2YmZjTC9jcmppZFA4RVc5TW1La0JiWER1aUdaSS91dnJ5SG5Bd1YvOUxOaGJ4eTFVaGs5RXdkRmxXcDRMSTQrSUkrM09VdjlPTDd5Y3lSc1AyTXI1b1kvRXlrNVljSC9DTExsZEtoUzdhenpIdnNZTFJ0aGpHVGZQQnZUTnR4NE9rU0VsdDAzbGp5dlFOVGpwK01XN1dtMmJmWENFc0hSSVlZL3ZraVVNQ2tOV0RtZisxNFdxbktyMEE4YjRNRGJneFFLK2UwTWpBPT0ifQ==; s_vnum=2113492896449%26vn%3D3; s_nr=1689171164448-Repeat; s_dslv=1689171164450; s_fid=6E7F2A98F939FF92-17FB949F197F08CA; sst-acbes=Sst1|PQGvh7IDiNRLV4o_ZxqTpYQ7B8ToqxDcu9oU4MHW0JvTEntNm9FAJAH_quxEhI7ikJojNXEOPCPqqQ7kuL8Z41qxy7U3tWw0CjHNZ53yuSY722Tcn2bXzMUB-UTQx8qvzmhkEmrvi816k2ILgfTGqE2iK25OLiwB5JJsoUrjSNU735obGFPaliW8CfPOYgyBFz55XRWk4o8qcOu9-uMZbCQ73xXl0ipAqQsl1DkA7HlRmTvOybMLFJKPw8VwxbblQU6C; session-id-time=2082787201l; i18n-prefs=EUR; lc-acbes=es_ES; session-token=\"0CFwBQVjwG54UTr7hZ2C6ZIIzRpEawYUL+F+qsdmRcR8B6kNcBvf91KqmLs/pum72Ggr9lZqDFy8BGUcwSVPHrUs07FlCG9PJJqlFU0qC6SAdr+KliK4jF5pnxeiCNmHHYKQRrTThcxA5ue3uNpWsU4QOssaqMu47kHCaOyCPQGQHKDhQOMjK1nFP7T4h5mZSvDBLTwxNbTIRpJIHKbv28QTjWDGgUIOKo4il8Zq5LI=\"; csm-hit=adb:adblk_yes&t:1689525816354&tb:YWE6D36KYNZ01KZ4DTDN+s-D9ZA1EEM79W03HA66MKN|1689525816354; i18n-prefs=EUR; session-id=260-4920659-2483311; session-id-time=2082787201l; session-token=\"Zj2CruzvCcwSEfuis1q6TzRdaoCsXkQUlX00ojS2+MLseuGhC16SCK4s4lwp+wenAftdJIu6MfITFYkYOfQ4TQZ0igwvJNPiE4SmTflRENPKhXJCuDdQB9wTauiQ2aeawreVe8cAHlBfYkdNVwOcEZ15aF2u3VAcrrbJVfs+s1cXGYJkiSNl+XUwtw5MXsSREQAz2EEiz4OoE8EpIxUe61LnPqQn4+FFoZ8Y2hezW18=\"; ubid-acbes=260-0829677-4134123");
+            request.Headers.Add("device-memory", "8");
+            request.Headers.Add("downlink", "4.55");
+            request.Headers.Add("dpr", "1");
+            request.Headers.Add("ect", "4g");
+            request.Headers.Add("rtt", "50");
+            request.Headers.Add("sec-ch-device-memory", "8");
+            request.Headers.Add("sec-ch-dpr", "1");
+            request.Headers.Add("sec-ch-ua", "\"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"114\", \"Google Chrome\";v=\"114\"");
+            request.Headers.Add("sec-ch-ua-mobile", "?0");
+            request.Headers.Add("sec-ch-ua-platform", "\"Windows\"");
+            request.Headers.Add("sec-ch-ua-platform-version", "\"15.0.0\"");
+            request.Headers.Add("sec-ch-viewport-width", "1519");
+            request.Headers.Add("sec-fetch-dest", "document");
+            request.Headers.Add("sec-fetch-mode", "navigate");
+            request.Headers.Add("sec-fetch-site", "none");
+            request.Headers.Add("sec-fetch-user", "?1");
+            request.Headers.Add("upgrade-insecure-requests", "1");
+            //request.Headers.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");
+            request.Headers.Add("viewport-width", "1519");
+            var response = await client.SendAsync(request);
 
-            //HttpClientHandler handler = new()
-            //{
-            //    CookieContainer = cookieContainer,
-            //    UseCookies = true
-            //};
-
-
-            //// Create an instance of HttpClient with the configured handler
-            //HttpClient httpClient = new(handler);
-
-            //List<string> list = new() { "ubid-acbes=259-0337921-0383406; session-id=261-3401301-9939462; csd-key=eyJ3YXNtVGVzdGVkIjp0cnVlLCJ3YXNtQ29tcGF0aWJsZSI6dHJ1ZSwid2ViQ3J5cHRvVGVzdGVkIjpmYWxzZSwidiI6MSwia2lkIjoiN2Q1YTY4Iiwia2V5IjoiQXR4VTF3WkJnQXlOcDAySjBGUnc1QjJMTFpPOEhMYlhUL05YVXJxMmtqeUExU3hDMHc2SWdXZDl4SE1Nek1VQUF2bEk3cmlyYUJsRVp2NHBUMUN1OVRFRkFHQWU0dE56anliOXlMVjVSTTJjRmlaUXVGNmNoSnM0Nm1zb1RHTEc1dS9wU0hJd2xxcHZ2YmZjTC9jcmppZFA4RVc5TW1La0JiWER1aUdaSS91dnJ5SG5Bd1YvOUxOaGJ4eTFVaGs5RXdkRmxXcDRMSTQrSUkrM09VdjlPTDd5Y3lSc1AyTXI1b1kvRXlrNVljSC9DTExsZEtoUzdhenpIdnNZTFJ0aGpHVGZQQnZUTnR4NE9rU0VsdDAzbGp5dlFOVGpwK01XN1dtMmJmWENFc0hSSVlZL3ZraVVNQ2tOV0RtZisxNFdxbktyMEE4YjRNRGJneFFLK2UwTWpBPT0ifQ==; s_vnum=2113492896449%26vn%3D3; s_nr=1689171164448-Repeat; s_dslv=1689171164450; s_fid=6E7F2A98F939FF92-17FB949F197F08CA; sst-acbes=Sst1|PQGvh7IDiNRLV4o_ZxqTpYQ7B8ToqxDcu9oU4MHW0JvTEntNm9FAJAH_quxEhI7ikJojNXEOPCPqqQ7kuL8Z41qxy7U3tWw0CjHNZ53yuSY722Tcn2bXzMUB-UTQx8qvzmhkEmrvi816k2ILgfTGqE2iK25OLiwB5JJsoUrjSNU735obGFPaliW8CfPOYgyBFz55XRWk4o8qcOu9-uMZbCQ73xXl0ipAqQsl1DkA7HlRmTvOybMLFJKPw8VwxbblQU6C; session-id-time=2082787201l; i18n-prefs=EUR; lc-acbes=es_ES; csm-hit=adb:adblk_yes&t:1689411439172&tb:DHNGMBXCDK7AK67FHQ8X+s-KHJVM49Z39D3N177S149|1689411439172; session-token=\"jUaXhaxf/Q6jY43RgXsNOQ7thfj0NOczQAi/D19X4ijS1PWjGfAGexkmJIQNH/BUqDoYFnCa4S24mv1pehPbn589uyaO9iOByyc6m581+bO9UmDFOtvyfdGtUNtOEhWmzyca621MKt+/3aFgdG2lIi91I08zMTqVSButL5+ZVjPLHj6wZKD7P9t96vEHF5D5LQQD/kDM893M2AEjU/AX9SIDV7wpiztsKJNGJG58o7U=\"" };
-
-            //var a = JsonConvert.SerializeObject(list);
-
-            //if (!string.IsNullOrEmpty(_scrapingServicesConfiguration.UserAgentHeader)) httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(_scrapingServicesConfiguration.UserAgentHeader);
-
-            //HttpResponseMessage httpResponse = await httpClient.GetAsync(url);
-            //if (httpResponse.IsSuccessStatusCode)
-            //{
-            //    await _logsRepository.CreateLog("Info GetHtmlDocument", httpResponse);
-            //}
-            //else
-            //{
-            //    await _logsRepository.CreateLog("Error", httpResponse);
-            //    return null;
-            //}
-
-            //string htmlPage = await httpResponse.Content.ReadAsStringAsync();
-            //await _logsRepository.CreateLog("Info GetHtmlDocument html", htmlPage);
-            //httpResponse.Headers.TryGetValues("Set-Cookie", out var cookieValues);
-
-            //string headers = "";
-            //foreach (var header in httpClient.DefaultRequestHeaders)
-            //{
-            //    headers += $"Key={header.Key}, Value={string.Join(", ", header.Value)}\n";
-            //}
-
-            //string cookies = "";
-            //if (cookieValues is not null)
-            //{
-            //    foreach (var cookie in cookieValues)
-            //    {
-            //        cookies += $"Value={cookie}, ";
-            //    }
-            //}
-
-
-            //await _logsRepository.CreateLog("Info GetHtmlDocument Headers", headers);
-            //await _logsRepository.CreateLog("Info GetHtmlDocument Cookies", cookies);
-
-            HttpClient httpClient = new HttpClient();
-
-            // Prepare the form data
-            var formData = new Dictionary<string, string>
-                {
-                    { "path", url }
-                };
-            HttpContent content = new FormUrlEncodedContent(formData);
-
-
-            // Send the POST request and handle the response
-            HttpResponseMessage response = await httpClient.PostAsync(url, content);
-
-            // Read the response content
-            string responseContent = await response.Content.ReadAsStringAsync();
+            string html = await response.Content.ReadAsStringAsync();
 
             HtmlDocument htmlDocument = new();
-            htmlDocument.LoadHtml(responseContent);
-            await _logsRepository.CreateLog("Info GetHtmlDocument Html", responseContent);
+            htmlDocument.LoadHtml(html);
+            await _logsRepository.CreateLog("Info GetHtmlDocument Html", html);
             return htmlDocument;
         }
     }
