@@ -101,16 +101,17 @@ namespace AmazonApi.Services.Implementations
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
             var client = new HttpClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            var request = new HttpRequestMessage(HttpMethod.Get, "https://www.amazon.es/s?k=logitech");
             request.Headers.Add("authority", "www.amazon.es");
             request.Headers.Add("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
             request.Headers.Add("accept-language", "en-GB,en-US;q=0.9,en;q=0.8,es;q=0.7");
-            request.Headers.Add("cache-control", "max-age=0");
+            request.Headers.Add("cache-control", "no-cache");
             request.Headers.Add("cookie", _scrapingServicesConfiguration.Cookie);
             request.Headers.Add("device-memory", "8");
-            request.Headers.Add("downlink", "4.55");
+            request.Headers.Add("downlink", "3.55");
             request.Headers.Add("dpr", "1");
             request.Headers.Add("ect", "4g");
+            request.Headers.Add("pragma", "no-cache");
             request.Headers.Add("rtt", "50");
             request.Headers.Add("sec-ch-device-memory", "8");
             request.Headers.Add("sec-ch-dpr", "1");
@@ -121,11 +122,12 @@ namespace AmazonApi.Services.Implementations
             request.Headers.Add("sec-ch-viewport-width", "1519");
             request.Headers.Add("sec-fetch-dest", "document");
             request.Headers.Add("sec-fetch-mode", "navigate");
-            request.Headers.Add("sec-fetch-site", "none");
+            request.Headers.Add("sec-fetch-site", "same-origin");
             request.Headers.Add("sec-fetch-user", "?1");
             request.Headers.Add("upgrade-insecure-requests", "1");
             request.Headers.Add("viewport-width", "1519");
             var response = await client.SendAsync(request);
+
 
             string html = await response.Content.ReadAsStringAsync();
 
