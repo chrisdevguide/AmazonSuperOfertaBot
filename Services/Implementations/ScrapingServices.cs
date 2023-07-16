@@ -106,7 +106,7 @@ namespace AmazonApi.Services.Implementations
             request.Headers.Add("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
             request.Headers.Add("accept-language", "en-GB,en-US;q=0.9,en;q=0.8,es;q=0.7");
             request.Headers.Add("cache-control", "max-age=0");
-            request.Headers.Add("cookie", "ubid-acbes=259-0337921-0383406; session-id=261-3401301-9939462; csd-key=eyJ3YXNtVGVzdGVkIjp0cnVlLCJ3YXNtQ29tcGF0aWJsZSI6dHJ1ZSwid2ViQ3J5cHRvVGVzdGVkIjpmYWxzZSwidiI6MSwia2lkIjoiN2Q1YTY4Iiwia2V5IjoiQXR4VTF3WkJnQXlOcDAySjBGUnc1QjJMTFpPOEhMYlhUL05YVXJxMmtqeUExU3hDMHc2SWdXZDl4SE1Nek1VQUF2bEk3cmlyYUJsRVp2NHBUMUN1OVRFRkFHQWU0dE56anliOXlMVjVSTTJjRmlaUXVGNmNoSnM0Nm1zb1RHTEc1dS9wU0hJd2xxcHZ2YmZjTC9jcmppZFA4RVc5TW1La0JiWER1aUdaSS91dnJ5SG5Bd1YvOUxOaGJ4eTFVaGs5RXdkRmxXcDRMSTQrSUkrM09VdjlPTDd5Y3lSc1AyTXI1b1kvRXlrNVljSC9DTExsZEtoUzdhenpIdnNZTFJ0aGpHVGZQQnZUTnR4NE9rU0VsdDAzbGp5dlFOVGpwK01XN1dtMmJmWENFc0hSSVlZL3ZraVVNQ2tOV0RtZisxNFdxbktyMEE4YjRNRGJneFFLK2UwTWpBPT0ifQ==; s_vnum=2113492896449%26vn%3D3; s_nr=1689171164448-Repeat; s_dslv=1689171164450; s_fid=6E7F2A98F939FF92-17FB949F197F08CA; sst-acbes=Sst1|PQGvh7IDiNRLV4o_ZxqTpYQ7B8ToqxDcu9oU4MHW0JvTEntNm9FAJAH_quxEhI7ikJojNXEOPCPqqQ7kuL8Z41qxy7U3tWw0CjHNZ53yuSY722Tcn2bXzMUB-UTQx8qvzmhkEmrvi816k2ILgfTGqE2iK25OLiwB5JJsoUrjSNU735obGFPaliW8CfPOYgyBFz55XRWk4o8qcOu9-uMZbCQ73xXl0ipAqQsl1DkA7HlRmTvOybMLFJKPw8VwxbblQU6C; session-id-time=2082787201l; i18n-prefs=EUR; lc-acbes=es_ES; session-token=\"0CFwBQVjwG54UTr7hZ2C6ZIIzRpEawYUL+F+qsdmRcR8B6kNcBvf91KqmLs/pum72Ggr9lZqDFy8BGUcwSVPHrUs07FlCG9PJJqlFU0qC6SAdr+KliK4jF5pnxeiCNmHHYKQRrTThcxA5ue3uNpWsU4QOssaqMu47kHCaOyCPQGQHKDhQOMjK1nFP7T4h5mZSvDBLTwxNbTIRpJIHKbv28QTjWDGgUIOKo4il8Zq5LI=\"; csm-hit=adb:adblk_yes&t:1689525816354&tb:YWE6D36KYNZ01KZ4DTDN+s-D9ZA1EEM79W03HA66MKN|1689525816354; i18n-prefs=EUR; session-id=260-4920659-2483311; session-id-time=2082787201l; session-token=\"Zj2CruzvCcwSEfuis1q6TzRdaoCsXkQUlX00ojS2+MLseuGhC16SCK4s4lwp+wenAftdJIu6MfITFYkYOfQ4TQZ0igwvJNPiE4SmTflRENPKhXJCuDdQB9wTauiQ2aeawreVe8cAHlBfYkdNVwOcEZ15aF2u3VAcrrbJVfs+s1cXGYJkiSNl+XUwtw5MXsSREQAz2EEiz4OoE8EpIxUe61LnPqQn4+FFoZ8Y2hezW18=\"; ubid-acbes=260-0829677-4134123");
+            request.Headers.Add("cookie", _scrapingServicesConfiguration.Cookie);
             request.Headers.Add("device-memory", "8");
             request.Headers.Add("downlink", "4.55");
             request.Headers.Add("dpr", "1");
@@ -124,7 +124,6 @@ namespace AmazonApi.Services.Implementations
             request.Headers.Add("sec-fetch-site", "none");
             request.Headers.Add("sec-fetch-user", "?1");
             request.Headers.Add("upgrade-insecure-requests", "1");
-            //request.Headers.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");
             request.Headers.Add("viewport-width", "1519");
             var response = await client.SendAsync(request);
 
