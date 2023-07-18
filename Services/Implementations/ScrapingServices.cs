@@ -102,7 +102,16 @@ namespace AmazonApi.Services.Implementations
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
             HttpClient client = new();
-            client.DefaultRequestHeaders.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");
+            client.DefaultRequestHeaders.Add("sec-ch-ua", "\"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"114\", \"Google Chrome\";v=\"114\"");
+            client.DefaultRequestHeaders.Add("pragma", "no-cache");
+            client.DefaultRequestHeaders.Add("accept-language", "en-GB,en-US;q=0.9,en;q=0.8,es;q=0.7");
+            client.DefaultRequestHeaders.Add("sec-ch-ua-mobile", "?0");
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");
+            client.DefaultRequestHeaders.Add("accept", "*/*");
+            client.DefaultRequestHeaders.Add("x-devid", "ca648030-4c36-4d39-9411-dcdf34c3c6a3R");
+            client.DefaultRequestHeaders.Add("cache-control", "no-cache, no-store, must-revalidate");
+            client.DefaultRequestHeaders.Add("x-sesid", "1689700839204");
+            client.DefaultRequestHeaders.Add("sec-ch-ua-platform", "\"Windows\"");
 
             GetHtmlDocumentRequest request = new()
             {
@@ -124,7 +133,7 @@ namespace AmazonApi.Services.Implementations
                     lang = "",
                     auth = new()
                     {
-                        auth = "",
+                        auth = "noAuth",
                         bearerToken = "",
                         basicUsername = "",
                         basicPassword = "",
