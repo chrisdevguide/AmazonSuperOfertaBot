@@ -5,9 +5,7 @@ using ElAhorrador.Dtos;
 using ElAhorrador.Extensions;
 using ElAhorrador.Models;
 using HtmlAgilityPack;
-using OpenQA.Selenium.Chrome;
-using WebDriverManager;
-using WebDriverManager.DriverConfigs.Impl;
+using PuppeteerSharp;
 
 namespace AmazonApi.Services.Implementations
 {
@@ -102,15 +100,23 @@ namespace AmazonApi.Services.Implementations
 
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
-            string driverLocation = new DriverManager().SetUpDriver(new ChromeConfig());
-            await _logsRepository.CreateLog("Info GetHtmlDocument Driver", driverLocation);
+            await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultChromiumRevision);
+            var options = new LaunchOptions
+            {
+                Headless = true // Set to false if you want to see the browser window
+            };
+            using var browser = await Puppeteer.LaunchAsync(options);
+            using var page = await browser.NewPageAsync();
 
-            ChromeOptions options = new();
-            options.AddArgument("--headless");
+            // Navigate to Amazon
+            await page.GoToAsync(url);
 
-            using ChromeDriver driver = new(driverLocation, options);
-            driver.Navigate().GoToUrl(url);
-            string html = driver.PageSource;
+            // Wait for the page to load completely (you may need to adjust the wait time)
+            await page.WaitForTimeoutAsync(1000);
+
+            // Now you can interact with the page using PuppeteerSharp's API
+            // For example, you can get the page content or search for elements using XPath/CSS selectors
+            string html = await page.GetContentAsync();
 
             HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(html);
