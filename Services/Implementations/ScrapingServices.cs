@@ -100,19 +100,8 @@ namespace AmazonApi.Services.Implementations
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
             HttpClient client = new();
-            HttpRequestMessage request = new(HttpMethod.Post, "https://viewsourcepage.com/wp-admin/admin-ajax.php");
-            request.Headers.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");
-
-            Dictionary<string, string> formData = new()
-            {
-                { "url", url },
-                {"action", "psvAjaxAction" }
-            };
-
-            request.Content = new FormUrlEncodedContent(formData);
-            HttpResponseMessage response = await client.SendAsync(request);
-
-            string html = await response.Content.ReadAsStringAsync();
+            url = $"https://api.scraperapi.com?api_key={_scrapingServicesConfiguration.ScraperApiKey}&url={url}";
+            string html = await client.GetStringAsync(url);
 
             HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(html);

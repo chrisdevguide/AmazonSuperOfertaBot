@@ -4,7 +4,6 @@
     {
         public string BaseProductUrl { get; set; }
         public string AffiliateName { get; set; }
-        public string UserAgentHeader { get; set; }
-        public string Cookie { get; set; }
+        public string ScraperApiKey { get; set; }
     }
 }

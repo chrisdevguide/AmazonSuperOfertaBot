@@ -31,12 +31,13 @@ namespace AmazonApi.Models
             }
         }
 
-        public bool IsValid() => !string.IsNullOrEmpty(Asin);
+        public bool IsValid() => !string.IsNullOrEmpty(Asin) && CurrentPrice > 0;
 
         public static decimal ParsePrice(string value)
         {
             if (string.IsNullOrEmpty(value)) return 0;
             value = value.ReplaceCommaForDot();
+            value = value.Trim();
             if (value.Split(".").Length > 2)
             {
                 value = value.RemoveFirstDot();
