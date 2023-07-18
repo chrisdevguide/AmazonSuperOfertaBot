@@ -5,6 +5,7 @@ using ElAhorrador.Dtos;
 using ElAhorrador.Extensions;
 using ElAhorrador.Models;
 using HtmlAgilityPack;
+using System.Net;
 
 namespace AmazonApi.Services.Implementations
 {
@@ -29,7 +30,7 @@ namespace AmazonApi.Services.Implementations
 
             ScrapeConfiguration scrapeConfiguration = await _configurationRepository.GetConfiguration<ScrapeConfiguration>() ?? throw new ApiException("No configuration has been loaded.");
 
-            HtmlDocument htmlDocument = GetHtmlDocument($"{scrapeConfiguration.SearchProductUrl}{request.SearchText}");
+            HtmlDocument htmlDocument = await GetHtmlDocument($"{scrapeConfiguration.SearchProductUrl}{request.SearchText}");
             if (htmlDocument is null) return null;
 
             await _logsRepository.CreateLog("Info HtmlDocument Loaded", htmlDocument.ParsedText);
@@ -72,7 +73,7 @@ namespace AmazonApi.Services.Implementations
             if (string.IsNullOrEmpty(asin) || string.IsNullOrWhiteSpace(asin)) return null;
 
             ScrapeProductConfiguration scrapeProductConfiguration = await _configurationRepository.GetConfiguration<ScrapeProductConfiguration>() ?? throw new ApiException("No configuration has been loaded.");
-            HtmlDocument htmlDocument = GetHtmlDocument($"{scrapeProductConfiguration.SearchProductUrl}{asin}");
+            HtmlDocument htmlDocument = await GetHtmlDocument($"{scrapeProductConfiguration.SearchProductUrl}{asin}");
             if (htmlDocument is null) return null;
             HtmlNode amazonProductNode = htmlDocument.DocumentNode.SelectSingleNode(scrapeProductConfiguration.ProductPath);
             if (amazonProductNode is null) return null;
@@ -97,6 +98,27 @@ namespace AmazonApi.Services.Implementations
             return amazonProduct;
         }
 
-        private static HtmlDocument GetHtmlDocument(string url) => new HtmlWeb().Load(url);
+        private async Task<HtmlDocument> GetHtmlDocument(string url)
+        {
+            WebProxy proxy = new(_scrapingServicesConfiguration.ProxyUrl, _scrapingServicesConfiguration.ProxyPort)
+            {
+                Credentials = new NetworkCredential(_scrapingServicesConfiguration.ProxyUsername, _scrapingServicesConfiguration.ProxyPassword)
+            };
+
+            HttpClientHandler httpClientHandler = new()
+            {
+                Proxy = proxy,
+                UseProxy = true
+            };
+
+            HttpClient httpClient = new(httpClientHandler);
+
+            HttpResponseMessage response = await httpClient.GetAsync(url);
+            string html = await response.Content.ReadAsStringAsync();
+
+            HtmlDocument document = new();
+            document.LoadHtml(html);
+            return document;
+        }
     }
 }
