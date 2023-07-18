@@ -14,11 +14,11 @@
             IServiceScope scope = _serviceProvider.CreateScope();
             TelegramServices telegramServices = scope.ServiceProvider.GetRequiredService<TelegramServices>();
             telegramServices.StartBot();
-            //while (true)
-            //{
-            //    await telegramServices.CheckAlerts();
-            //    await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
-            //}
+            while (true)
+            {
+                await telegramServices.CheckAlerts();
+                await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+            }
         }
     }
 }

@@ -39,7 +39,6 @@ namespace AmazonApi.Services.Implementations
 
             foreach (HtmlNode amazonProductNode in amazonProductNodes)
             {
-                var a = amazonProductNode.SelectSingleNode(scrapeConfiguration.CurrentPricePath)?.InnerText;
                 AmazonProduct amazonProduct = new()
                 {
                     Asin = amazonProductNode.GetAttributeValue(scrapeConfiguration.AsinPath, null),
@@ -100,13 +99,15 @@ namespace AmazonApi.Services.Implementations
 
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
+
             HttpClient client = new();
             HttpRequestMessage request = new(HttpMethod.Post, "https://viewsourcepage.com/wp-admin/admin-ajax.php");
+            request.Headers.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");
 
             Dictionary<string, string> formData = new()
             {
-                {"action", "psvAjaxAction" },
                 { "url", url },
+                {"action", "psvAjaxAction" }
             };
 
             request.Content = new FormUrlEncodedContent(formData);
