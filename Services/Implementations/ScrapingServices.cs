@@ -102,12 +102,13 @@ namespace AmazonApi.Services.Implementations
 
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
-            new DriverManager().SetUpDriver(new ChromeConfig());
+            string driverLocation = new DriverManager().SetUpDriver(new ChromeConfig());
+            await _logsRepository.CreateLog("Info GetHtmlDocument Driver", driverLocation);
 
             ChromeOptions options = new();
             options.AddArgument("--headless");
 
-            using ChromeDriver driver = new(options);
+            using ChromeDriver driver = new(driverLocation, options);
             driver.Navigate().GoToUrl(url);
             string html = driver.PageSource;
 
