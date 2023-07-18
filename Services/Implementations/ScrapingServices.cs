@@ -5,7 +5,7 @@ using ElAhorrador.Dtos;
 using ElAhorrador.Extensions;
 using ElAhorrador.Models;
 using HtmlAgilityPack;
-using OpenQA.Selenium.Chrome;
+using PuppeteerSharp;
 
 namespace AmazonApi.Services.Implementations
 {
@@ -102,16 +102,20 @@ namespace AmazonApi.Services.Implementations
 
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
-            ChromeOptions options = new()
+            var options = new LaunchOptions
             {
-                BinaryLocation = _configuration.GetValue<string>("Selenium:BinaryLocation") ?? null
+                Headless = true // Set to false if you want to see the browser GUI
             };
-            options.AddArgument("--headless");
-            using ChromeDriver driver = new(_configuration.GetValue<string>("Selenium:ChromeDriver") ?? null, options);
-            driver.Navigate().GoToUrl(url);
 
-            string html = driver.PageSource;
+            // Replace "pathToChromiumExecutable" with the actual path to your Chromium executable
+            await new BrowserFetcher().DownloadAsync();
+            using var browser = await Puppeteer.LaunchAsync(options);
 
+            using var page = await browser.NewPageAsync();
+
+            await page.GoToAsync(url);
+
+            string html = await page.GetContentAsync();
             HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(html);
             await _logsRepository.CreateLog("Info GetHtmlDocument Html", html);
