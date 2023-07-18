@@ -5,6 +5,7 @@ using ElAhorrador.Dtos;
 using ElAhorrador.Extensions;
 using ElAhorrador.Models;
 using HtmlAgilityPack;
+using OpenQA.Selenium.Chrome;
 
 namespace AmazonApi.Services.Implementations
 {
@@ -99,9 +100,12 @@ namespace AmazonApi.Services.Implementations
 
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
-            HttpClient client = new();
-            url = $"https://api.scraperapi.com?api_key={_scrapingServicesConfiguration.ScraperApiKey}&url={url}";
-            string html = await client.GetStringAsync(url);
+            ChromeOptions options = new();
+            options.AddArgument("--headless");
+
+            using ChromeDriver driver = new(options);
+            driver.Navigate().GoToUrl(url);
+            string html = driver.PageSource;
 
             HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(html);
