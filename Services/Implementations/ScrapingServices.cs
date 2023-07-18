@@ -6,6 +6,8 @@ using ElAhorrador.Extensions;
 using ElAhorrador.Models;
 using HtmlAgilityPack;
 using OpenQA.Selenium.Chrome;
+using WebDriverManager;
+using WebDriverManager.DriverConfigs.Impl;
 
 namespace AmazonApi.Services.Implementations
 {
@@ -100,6 +102,8 @@ namespace AmazonApi.Services.Implementations
 
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
+            new DriverManager().SetUpDriver(new ChromeConfig());
+
             ChromeOptions options = new();
             options.AddArgument("--headless");
 
