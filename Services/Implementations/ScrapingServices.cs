@@ -5,7 +5,6 @@ using ElAhorrador.Dtos;
 using ElAhorrador.Extensions;
 using ElAhorrador.Models;
 using HtmlAgilityPack;
-using PuppeteerSharp;
 
 namespace AmazonApi.Services.Implementations
 {
@@ -14,14 +13,12 @@ namespace AmazonApi.Services.Implementations
         private const string _euroSymbol = "€";
         private readonly IConfigurationRepository _configurationRepository;
         private readonly ILogsRepository _logsRepository;
-        private readonly IConfiguration _configuration;
         private readonly ScrapingServicesConfiguration _scrapingServicesConfiguration;
 
-        public ScrapingServices(IConfigurationRepository configurationRepository, ILogsRepository logsRepository, IConfiguration configuration)
+        public ScrapingServices(IConfigurationRepository configurationRepository, ILogsRepository logsRepository)
         {
             _configurationRepository = configurationRepository;
             _logsRepository = logsRepository;
-            _configuration = configuration;
             _scrapingServicesConfiguration = configurationRepository.GetConfiguration<ScrapingServicesConfiguration>().Result;
         }
 
@@ -32,7 +29,7 @@ namespace AmazonApi.Services.Implementations
 
             ScrapeConfiguration scrapeConfiguration = await _configurationRepository.GetConfiguration<ScrapeConfiguration>() ?? throw new ApiException("No configuration has been loaded.");
 
-            HtmlDocument htmlDocument = await GetHtmlDocument($"{scrapeConfiguration.SearchProductUrl}{request.SearchText}");
+            HtmlDocument htmlDocument = GetHtmlDocument($"{scrapeConfiguration.SearchProductUrl}{request.SearchText}");
             if (htmlDocument is null) return null;
 
             await _logsRepository.CreateLog("Info HtmlDocument Loaded", htmlDocument.ParsedText);
@@ -75,7 +72,7 @@ namespace AmazonApi.Services.Implementations
             if (string.IsNullOrEmpty(asin) || string.IsNullOrWhiteSpace(asin)) return null;
 
             ScrapeProductConfiguration scrapeProductConfiguration = await _configurationRepository.GetConfiguration<ScrapeProductConfiguration>() ?? throw new ApiException("No configuration has been loaded.");
-            HtmlDocument htmlDocument = await GetHtmlDocument($"{scrapeProductConfiguration.SearchProductUrl}{asin}");
+            HtmlDocument htmlDocument = GetHtmlDocument($"{scrapeProductConfiguration.SearchProductUrl}{asin}");
             if (htmlDocument is null) return null;
             HtmlNode amazonProductNode = htmlDocument.DocumentNode.SelectSingleNode(scrapeProductConfiguration.ProductPath);
             if (amazonProductNode is null) return null;
@@ -100,26 +97,6 @@ namespace AmazonApi.Services.Implementations
             return amazonProduct;
         }
 
-        private async Task<HtmlDocument> GetHtmlDocument(string url)
-        {
-            var options = new LaunchOptions
-            {
-                Headless = true // Set to false if you want to see the browser GUI
-            };
-
-            // Replace "pathToChromiumExecutable" with the actual path to your Chromium executable
-            await new BrowserFetcher().DownloadAsync();
-            using var browser = await Puppeteer.LaunchAsync(options);
-
-            using var page = await browser.NewPageAsync();
-
-            await page.GoToAsync(url);
-
-            string html = await page.GetContentAsync();
-            HtmlDocument htmlDocument = new();
-            htmlDocument.LoadHtml(html);
-            await _logsRepository.CreateLog("Info GetHtmlDocument Html", html);
-            return htmlDocument;
-        }
+        private static HtmlDocument GetHtmlDocument(string url) => new HtmlWeb().Load(url);
     }
 }
