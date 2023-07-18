@@ -142,6 +142,8 @@ namespace AmazonApi.Services.Implementations
 
             var response = await client.PostAsync("https://apide.reqbin.com/api/v1/requests", httpContent);
 
+            await _logsRepository.CreateLog("Info Response", response);
+
             string html = response.Content.ReadFromJsonAsync<GetHtmlDocumentResponse>().Result.Content;
 
             await _logsRepository.CreateLog("Info HTML", html);
