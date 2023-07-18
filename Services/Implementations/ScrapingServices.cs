@@ -113,8 +113,35 @@ namespace AmazonApi.Services.Implementations
 
             HttpClient httpClient = new(httpClientHandler);
 
-            HttpResponseMessage response = await httpClient.GetAsync(url);
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("authority", "www.amazon.es");
+            request.Headers.Add("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
+            request.Headers.Add("accept-language", "en-GB,en-US;q=0.9,en;q=0.8,es;q=0.7");
+            request.Headers.Add("cache-control", "max-age=0");
+            request.Headers.Add("cookie", "session-id=258-7296915-8311242; session-id-time=2082787201l; i18n-prefs=EUR; csm-hit=tb:DP3DG4QTJXA9ARCZG0HD+s-DP3DG4QTJXA9ARCZG0HD|1689699292128&t:1689699292128&adb:adblk_no; ubid-acbes=257-5950897-2277522");
+            request.Headers.Add("device-memory", "8");
+            request.Headers.Add("downlink", "10");
+            request.Headers.Add("dpr", "1");
+            request.Headers.Add("ect", "4g");
+            request.Headers.Add("rtt", "50");
+            request.Headers.Add("sec-ch-device-memory", "8");
+            request.Headers.Add("sec-ch-dpr", "1");
+            request.Headers.Add("sec-ch-ua", "\"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"114\", \"Google Chrome\";v=\"114\"");
+            request.Headers.Add("sec-ch-ua-mobile", "?0");
+            request.Headers.Add("sec-ch-ua-platform", "\"Windows\"");
+            request.Headers.Add("sec-ch-ua-platform-version", "\"15.0.0\"");
+            request.Headers.Add("sec-ch-viewport-width", "1675");
+            request.Headers.Add("sec-fetch-dest", "document");
+            request.Headers.Add("sec-fetch-mode", "navigate");
+            request.Headers.Add("sec-fetch-site", "none");
+            request.Headers.Add("sec-fetch-user", "?1");
+            request.Headers.Add("upgrade-insecure-requests", "1");
+            request.Headers.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36");
+            request.Headers.Add("viewport-width", "1675");
+            HttpResponseMessage response = await httpClient.SendAsync(request);
             string html = await response.Content.ReadAsStringAsync();
+
+            await _logsRepository.CreateLog("Info HTML", html);
 
             HtmlDocument document = new();
             document.LoadHtml(html);
