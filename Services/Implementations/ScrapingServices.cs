@@ -5,7 +5,7 @@ using ElAhorrador.Dtos;
 using ElAhorrador.Extensions;
 using ElAhorrador.Models;
 using HtmlAgilityPack;
-using PuppeteerSharp;
+using OpenQA.Selenium.Chrome;
 
 namespace AmazonApi.Services.Implementations
 {
@@ -14,12 +14,14 @@ namespace AmazonApi.Services.Implementations
         private const string _euroSymbol = "€";
         private readonly IConfigurationRepository _configurationRepository;
         private readonly ILogsRepository _logsRepository;
+        private readonly IConfiguration _configuration;
         private readonly ScrapingServicesConfiguration _scrapingServicesConfiguration;
 
-        public ScrapingServices(IConfigurationRepository configurationRepository, ILogsRepository logsRepository)
+        public ScrapingServices(IConfigurationRepository configurationRepository, ILogsRepository logsRepository, IConfiguration configuration)
         {
             _configurationRepository = configurationRepository;
             _logsRepository = logsRepository;
+            _configuration = configuration;
             _scrapingServicesConfiguration = configurationRepository.GetConfiguration<ScrapingServicesConfiguration>().Result;
         }
 
@@ -100,23 +102,15 @@ namespace AmazonApi.Services.Implementations
 
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
-            await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultChromiumRevision);
-            var options = new LaunchOptions
+            ChromeOptions options = new()
             {
-                Headless = true // Set to false if you want to see the browser window
+                BinaryLocation = _configuration.GetValue<string>("Selenium:BinaryLocation") ?? null
             };
-            using var browser = await Puppeteer.LaunchAsync(options);
-            using var page = await browser.NewPageAsync();
+            options.AddArgument("--headless");
+            using ChromeDriver driver = new(_configuration.GetValue<string>("Selenium:ChromeDriver") ?? null, options);
+            driver.Navigate().GoToUrl(url);
 
-            // Navigate to Amazon
-            await page.GoToAsync(url);
-
-            // Wait for the page to load completely (you may need to adjust the wait time)
-            await page.WaitForTimeoutAsync(1000);
-
-            // Now you can interact with the page using PuppeteerSharp's API
-            // For example, you can get the page content or search for elements using XPath/CSS selectors
-            string html = await page.GetContentAsync();
+            string html = driver.PageSource;
 
             HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(html);
