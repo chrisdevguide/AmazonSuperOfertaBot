@@ -5,8 +5,6 @@ using ElAhorrador.Dtos;
 using ElAhorrador.Extensions;
 using ElAhorrador.Models;
 using HtmlAgilityPack;
-using Newtonsoft.Json;
-using System.Text;
 
 namespace AmazonApi.Services.Implementations
 {
@@ -101,59 +99,35 @@ namespace AmazonApi.Services.Implementations
 
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
-            HttpClient client = new();
-            client.DefaultRequestHeaders.Add("sec-ch-ua", "\"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"114\", \"Google Chrome\";v=\"114\"");
-            client.DefaultRequestHeaders.Add("pragma", "no-cache");
-            client.DefaultRequestHeaders.Add("accept-language", "en-GB,en-US;q=0.9,en;q=0.8,es;q=0.7");
-            client.DefaultRequestHeaders.Add("sec-ch-ua-mobile", "?0");
-            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");
-            client.DefaultRequestHeaders.Add("accept", "*/*");
-            client.DefaultRequestHeaders.Add("x-devid", "ca648030-4c36-4d39-9411-dcdf34c3c6a3R");
-            client.DefaultRequestHeaders.Add("cache-control", "no-cache, no-store, must-revalidate");
-            client.DefaultRequestHeaders.Add("x-sesid", "1689700839204");
-            client.DefaultRequestHeaders.Add("sec-ch-ua-platform", "\"Windows\"");
+            var client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://httpie.io/app/api/proxy");
+            request.Headers.Add("authority", "httpie.io");
+            request.Headers.Add("accept", "*/*");
+            request.Headers.Add("accept-language", "en-GB,en-US;q=0.9,en;q=0.8,es;q=0.7");
+            request.Headers.Add("cache-control", "max-age=0");
+            request.Headers.Add("cookie", "_ga=GA1.1.684260949.1689603781; _ga_9F2N2J68WF=GS1.1.1689764320.2.0.1689764327.0.0.0; ajs_anonymous_id=352a3d11-e03d-480f-ac08-ed3d48cf978a");
+            request.Headers.Add("origin", "https://httpie.io");
+            request.Headers.Add("referer", "https://httpie.io/app");
+            request.Headers.Add("sec-ch-ua", "\"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"114\", \"Google Chrome\";v=\"114\"");
+            request.Headers.Add("sec-ch-ua-mobile", "?0");
+            request.Headers.Add("sec-ch-ua-platform", "\"Windows\"");
+            request.Headers.Add("sec-fetch-dest", "empty");
+            request.Headers.Add("sec-fetch-mode", "cors");
+            request.Headers.Add("sec-fetch-site", "same-origin");
+            request.Headers.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");
+            request.Headers.Add("x-pie-req-header-cookie", "ubid-acbes=258-8142265-9806427;");
+            request.Headers.Add("x-pie-req-header-user-agent", "HTTPie");
+            request.Headers.Add("x-pie-req-meta-follow-redirects", "true");
+            request.Headers.Add("x-pie-req-meta-method", "GET");
+            request.Headers.Add("x-pie-req-meta-ssl-verify", "true");
+            request.Headers.Add("x-pie-req-meta-url", url);
 
-            GetHtmlDocumentRequest request = new()
-            {
-                id = "",
-                name = "",
-                errors = "",
-                json = JsonConvert.SerializeObject(new JsonHtmlDocumentRequest()
-                {
-                    method = "GET",
-                    url = url,
-                    apiNode = "DE",
-                    contentType = "",
-                    headers = "",
-                    errors = "",
-                    curlCmd = $"curl {url}",
-                    codeCmd = "",
-                    jsonCmd = "",
-                    xmlCmd = "",
-                    lang = "",
-                    auth = new()
-                    {
-                        auth = "noAuth",
-                        bearerToken = "",
-                        basicUsername = "",
-                        basicPassword = "",
-                        customHeader = "",
-                        encrypted = ""
-                    },
-                    compare = false,
-                    idnUrl = url
-                }),
-                sessionId = 0,
-                deviceId = ""
-            };
+            var response = await client.SendAsync(request);
 
-            HttpContent httpContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
-
-            var response = await client.PostAsync("https://apide.reqbin.com/api/v1/requests", httpContent);
 
             await _logsRepository.CreateLog("Info Response", response);
 
-            string html = response.Content.ReadFromJsonAsync<GetHtmlDocumentResponse>().Result.Content;
+            string html = await response.Content.ReadAsStringAsync();
 
             await _logsRepository.CreateLog("Info HTML", html);
 
@@ -162,50 +136,5 @@ namespace AmazonApi.Services.Implementations
             return document;
         }
 
-        public class GetHtmlDocumentResponse
-        {
-            public string Content { get; set; }
-
-        }
-
-        public class GetHtmlDocumentRequest
-        {
-            public string id { get; set; }
-            public string name { get; set; }
-            public string errors { get; set; }
-            public string json { get; set; } // Object for the 'json' property
-            public long sessionId { get; set; }
-            public string deviceId { get; set; }
-        }
-
-        public class JsonHtmlDocumentRequest
-        {
-            public string method { get; set; }
-            public string url { get; set; }
-            public string apiNode { get; set; }
-            public string contentType { get; set; }
-            public string headers { get; set; }
-            public string errors { get; set; }
-            public string curlCmd { get; set; }
-            public string codeCmd { get; set; }
-            public string jsonCmd { get; set; }
-            public string xmlCmd { get; set; }
-            public string lang { get; set; }
-            public AuthData auth { get; set; }
-            public bool compare { get; set; }
-            public string idnUrl { get; set; }
-        }
     }
-
-    public class AuthData
-    {
-        public string auth { get; set; }
-        public string bearerToken { get; set; }
-        public string basicUsername { get; set; }
-        public string basicPassword { get; set; }
-        public string customHeader { get; set; }
-        public string encrypted { get; set; }
-    }
-
 }
-
