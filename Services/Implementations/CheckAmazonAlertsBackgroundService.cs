@@ -2,11 +2,11 @@
 
 namespace ElAhorrador.Services.Implementations
 {
-    public class StartupBackgroundService : IJob
+    public class CheckAmazonAlertsBackgroundService : IJob
     {
         private readonly IServiceProvider _serviceProvider;
 
-        public StartupBackgroundService(IServiceProvider serviceProvider)
+        public CheckAmazonAlertsBackgroundService(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
         }
@@ -15,7 +15,6 @@ namespace ElAhorrador.Services.Implementations
         {
             IServiceScope scope = _serviceProvider.CreateScope();
             TelegramServices telegramServices = scope.ServiceProvider.GetRequiredService<TelegramServices>();
-            telegramServices.StartBot();
             await telegramServices.CheckAlerts();
         }
 

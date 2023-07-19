@@ -29,15 +29,21 @@ namespace AmazonApi
             builder.Services.AddQuartz(q =>
             {
                 q.UseMicrosoftDependencyInjectionJobFactory();
-                JobKey jobKey = new(nameof(StartupBackgroundService));
-                q.AddJob<StartupBackgroundService>(j => j.WithIdentity(jobKey));
+                JobKey checkAmazonAlertsJobKey = new(nameof(CheckAmazonAlertsBackgroundService));
+                JobKey startTelegramBotBackgroundServiceJobKey = new(nameof(StartTelegramBotBackgroundService));
+
+                q.AddJob<CheckAmazonAlertsBackgroundService>(j => j.WithIdentity(checkAmazonAlertsJobKey));
                 q.AddTrigger(t => t
-                    .ForJob(jobKey)
+                    .ForJob(checkAmazonAlertsJobKey)
                     .WithSimpleSchedule(s => s.WithIntervalInMinutes(5).RepeatForever())
+                    .StartNow());
+
+                q.AddJob<StartTelegramBotBackgroundService>(j => j.WithIdentity(startTelegramBotBackgroundServiceJobKey));
+                q.AddTrigger(t => t
+                    .ForJob(startTelegramBotBackgroundServiceJobKey)
                     .StartNow());
             });
             builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
-
 
             builder.Services.AddDbContext<DataContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 

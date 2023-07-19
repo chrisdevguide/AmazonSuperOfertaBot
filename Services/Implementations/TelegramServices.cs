@@ -424,6 +424,7 @@ namespace ElAhorrador.Services.Implementations
 
         async Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
+            StartBot();
             await Task.CompletedTask;
         }
 
