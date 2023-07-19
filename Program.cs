@@ -33,7 +33,7 @@ namespace AmazonApi
                 q.AddJob<StartupBackgroundService>(j => j.WithIdentity(jobKey));
                 q.AddTrigger(t => t
                     .ForJob(jobKey)
-                    .WithSimpleSchedule(s => s.WithIntervalInSeconds(5).RepeatForever())
+                    .WithSimpleSchedule(s => s.WithIntervalInMinutes(5).RepeatForever())
                     .StartNow());
             });
             builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
