@@ -100,11 +100,11 @@ namespace AmazonApi.Services.Implementations
         private async Task<HtmlDocument> GetHtmlDocument(string url)
         {
             HttpClient http = new();
-            http.DefaultRequestHeaders.Add("x-pie-req-header-cookie", "ubid-acbes=258-8142265-9806427;");
+            http.DefaultRequestHeaders.Add("x-pie-req-header-cookie", _scrapingServicesConfiguration.AmazonCookie);
             http.DefaultRequestHeaders.Add("x-pie-req-meta-method", "GET");
             http.DefaultRequestHeaders.Add("x-pie-req-meta-url", url);
 
-            HttpResponseMessage response = await http.PostAsync("https://httpie.io/app/api/proxy", null);
+            HttpResponseMessage response = await http.PostAsync(_scrapingServicesConfiguration.ProxyUrl, null);
 
             await _logsRepository.CreateLog("Info Response", response);
 
