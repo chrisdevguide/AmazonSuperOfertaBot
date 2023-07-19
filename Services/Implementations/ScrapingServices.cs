@@ -106,11 +106,13 @@ namespace AmazonApi.Services.Implementations
 
             HttpResponseMessage response = await http.PostAsync(_scrapingServicesConfiguration.ProxyUrl, null);
 
-            await _logsRepository.CreateLog("Info Response", response);
+            if (!response.IsSuccessStatusCode)
+            {
+                await _logsRepository.CreateLog($"Error {nameof(GetHtmlDocument)}", response);
+                return null;
+            }
 
             string html = await response.Content.ReadAsStringAsync();
-
-            await _logsRepository.CreateLog("Info HTML", html);
 
             HtmlDocument document = new();
             document.LoadHtml(html);
