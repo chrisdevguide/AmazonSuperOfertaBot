@@ -32,8 +32,6 @@ namespace AmazonApi.Services.Implementations
             HtmlDocument htmlDocument = await GetHtmlDocument($"{scrapeConfiguration.SearchProductUrl}{request.SearchText}");
             if (htmlDocument is null) return null;
 
-            await _logsRepository.CreateLog("Info HtmlDocument Loaded", htmlDocument.ParsedText);
-
             HtmlNodeCollection amazonProductNodes = htmlDocument.DocumentNode.SelectNodes(scrapeConfiguration.ProductsPath);
             if (amazonProductNodes is null) return null;
 

@@ -6,6 +6,7 @@ using ElAhorrador.Data.Repositories.Implementations;
 using ElAhorrador.Data.Repositories.Interfaces;
 using ElAhorrador.Services.Implementations;
 using Microsoft.EntityFrameworkCore;
+using Quartz;
 
 namespace AmazonApi
 {
@@ -25,7 +26,17 @@ namespace AmazonApi
             builder.Services.AddScoped<IAmazonAlertRepository, AmazonAlertRepository>();
             builder.Services.AddScoped<ILogsRepository, LogsRepository>();
             builder.Services.AddScoped<TelegramServices>();
-            builder.Services.AddHostedService<StartupBackgroundService>();
+            builder.Services.AddQuartz(q =>
+            {
+                q.UseMicrosoftDependencyInjectionJobFactory();
+                JobKey jobKey = new(nameof(StartupBackgroundService));
+                q.AddJob<StartupBackgroundService>(j => j.WithIdentity(jobKey));
+                q.AddTrigger(t => t
+                    .ForJob(jobKey)
+                    .WithSimpleSchedule(s => s.WithIntervalInSeconds(5).RepeatForever())
+                    .StartNow());
+            });
+            builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
 
             builder.Services.AddDbContext<DataContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));

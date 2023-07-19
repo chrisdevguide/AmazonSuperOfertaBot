@@ -34,7 +34,7 @@ namespace AmazonSuperOfertaBot.Middlewares
                     },
                 };
 
-                await _logsRepository.CreateLog("Error", ex);
+                await _logsRepository.CreateLog("ApiError", ex);
 
                 httpContext.Response.StatusCode = apiExceptionDto.StatusCode;
                 string json = JsonConvert.SerializeObject(apiExceptionDto);

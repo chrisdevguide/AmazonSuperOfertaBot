@@ -418,7 +418,7 @@ namespace ElAhorrador.Services.Implementations
             }
             catch (Exception e)
             {
-                await _logsRepository.CreateLog("Error", e);
+                await _logsRepository.CreateLog("Error TelegramBot", e);
             }
         }
 
