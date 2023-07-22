@@ -1,9 +1,12 @@
-﻿using AmazonApi.Models;
-using AmazonApi.Services.Implementations;
+﻿using AmazonApi.Data;
+using AmazonApi.Models;
 using AmazonSuperOfertaBot.Data.Repositories.Implementations;
+using AmazonSuperOfertaBot.Dtos;
+using AmazonSuperOfertaBot.Models;
+using AmazonSuperOfertaBot.Services.Interfaces;
+using AutoMapper;
 using ElAhorrador.Data.Repositories.Implementations;
 using ElAhorrador.Data.Repositories.Interfaces;
-using ElAhorrador.Dtos;
 using ElAhorrador.Models;
 using ElAhorrador.Models.Enum;
 using Newtonsoft.Json;
@@ -24,9 +27,12 @@ namespace ElAhorrador.Services.Implementations
         private readonly IScrapingServices _scrapingServices;
         private readonly IAmazonAlertRepository _amazonAlertRepository;
         private readonly ILogsRepository _logsRepository;
+        private readonly IMapper _mapper;
+        private readonly IAmazonProductsTelegramRepository _amazonProductsTelegramRepository;
+        private readonly DataContext _dataContext;
 
         public TelegramServices(IConfigurationRepository configurationRepository, ITelegramChatRepository telegramChatRepository, IScrapingServices scrapingServices,
-            IAmazonAlertRepository amazonAlertRepository, ILogsRepository logsRepository)
+            IAmazonAlertRepository amazonAlertRepository, ILogsRepository logsRepository, IMapper mapper, IAmazonProductsTelegramRepository amazonProductsTelegramRepository, DataContext dataContext)
         {
             _telegramConfiguration = configurationRepository.GetConfiguration<TelegramConfiguration>().Result;
             _botClient = new(_telegramConfiguration.ApiKey);
@@ -34,6 +40,9 @@ namespace ElAhorrador.Services.Implementations
             _scrapingServices = scrapingServices;
             _amazonAlertRepository = amazonAlertRepository;
             _logsRepository = logsRepository;
+            _mapper = mapper;
+            _amazonProductsTelegramRepository = amazonProductsTelegramRepository;
+            _dataContext = dataContext;
         }
 
         public void StartBot()
@@ -124,7 +133,7 @@ namespace ElAhorrador.Services.Implementations
                                 await _telegramChatRepository.DeleteTelegramChat(telegramChat.Id);
                                 return;
                             }
-                            scrapeRequestDto = scrapeRequestDto with { MinimumDiscount = parsedDiscount };
+                            scrapeRequestDto.MinimumDiscount = parsedDiscount;
                             telegramChat.Data = JsonConvert.SerializeObject(scrapeRequestDto);
                             telegramChat.ChatStep = (int)ScrapeTelegramChatSteps.AskForMinimumReviewsAdvancedSearch;
                             await botClient.SendTextMessageAsync(chatId, $"Ahora indica el numero de estrellas mínimo que un producto debe tener. Insertar un valor de 0.0 a 5.0.", cancellationToken: cancellationToken);
@@ -139,7 +148,7 @@ namespace ElAhorrador.Services.Implementations
                                 await _telegramChatRepository.DeleteTelegramChat(telegramChat.Id);
                                 return;
                             }
-                            scrapeRequestDto = scrapeRequestDto with { MinimumStars = parsedStars };
+                            scrapeRequestDto.MinimumStars = parsedStars;
                             telegramChat.Data = JsonConvert.SerializeObject(scrapeRequestDto);
                             telegramChat.ChatStep = (int)ScrapeTelegramChatSteps.AskForProductNameMustContainKeyword;
                             await _telegramChatRepository.UpdateTelegramChat(telegramChat);
@@ -153,7 +162,7 @@ namespace ElAhorrador.Services.Implementations
                                 return;
                             }
                             scrapeRequestDto = JsonConvert.DeserializeObject<ScrapeRequestDto>(telegramChat.Data);
-                            scrapeRequestDto = scrapeRequestDto with { MinimumReviews = parsedReviews };
+                            scrapeRequestDto.MinimumReviews = parsedReviews;
                             telegramChat.Data = JsonConvert.SerializeObject(scrapeRequestDto);
                             telegramChat.ChatStep = (int)ScrapeTelegramChatSteps.ReadyToAdvancedSearch;
                             await _telegramChatRepository.UpdateTelegramChat(telegramChat);
@@ -186,7 +195,7 @@ namespace ElAhorrador.Services.Implementations
                             }
                             await SendSearchingWaitingMessage(telegramChat.Id);
                             scrapeRequestDto = JsonConvert.DeserializeObject<ScrapeRequestDto>(telegramChat.Data);
-                            scrapeRequestDto = scrapeRequestDto with { MustContainSearchText = parsedText };
+                            scrapeRequestDto.MustContainSearchText = parsedText;
                             amazonProducts = await _scrapingServices.Scrape(scrapeRequestDto);
                             await botClient.SendTextMessageAsync(chatId, $"Se han encontrado {amazonProducts.Count} productos. Los productos se ordenan por descuento de mayor a menor.", cancellationToken: cancellationToken);
                             await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
@@ -375,6 +384,7 @@ namespace ElAhorrador.Services.Implementations
                             List<List<InlineKeyboardButton>> inlineKeyboardButtons = new() { new()
                             {
                                 InlineKeyboardButton.WithCallbackData("Enviar producto", nameof(AdminTelegramChatSteps.SendProductToChannel)),
+                                InlineKeyboardButton.WithCallbackData("Buscar Categorías", nameof(AdminTelegramChatSteps.SearchCategories)),
                             }
                         };
                             InlineKeyboardMarkup inlineKeyboard = new(inlineKeyboardButtons);
@@ -389,6 +399,11 @@ namespace ElAhorrador.Services.Implementations
                                     telegramChat.ChatStep = (int)AdminTelegramChatSteps.SendProductToChannel;
                                     await _telegramChatRepository.UpdateTelegramChat(telegramChat);
                                     await botClient.SendTextMessageAsync(chatId, $"Insertar el ASIN del producto para enviar.", cancellationToken: cancellationToken);
+                                    break;
+                                case nameof(AdminTelegramChatSteps.SearchCategories):
+                                    telegramChat.ChatStep = (int)AdminTelegramChatSteps.SearchCategories;
+                                    await _telegramChatRepository.UpdateTelegramChat(telegramChat);
+                                    await botClient.SendTextMessageAsync(chatId, $"Se buscarán las categorías en Amazon y se enviarán los productos que no se hayan enviado antes. ¿Cual es el descuento mínimo por el cual buscar?", cancellationToken: cancellationToken);
                                     break;
                                 default:
                                     await botClient.SendTextMessageAsync(chatId, $"Acción no valida. Fin de la conversación.", cancellationToken: cancellationToken);
@@ -409,6 +424,47 @@ namespace ElAhorrador.Services.Implementations
                             await botClient.SendTextMessageAsync(chatId, $"Producto enviado correctamente. Fin de la conversación.", cancellationToken: cancellationToken);
                             await _telegramChatRepository.DeleteTelegramChat(telegramChat.Id);
                             break;
+                        case (int)AdminTelegramChatSteps.SearchCategories:
+                            if (!decimal.TryParse(receivedText, out decimal parsedDiscount) || parsedDiscount < 0 || parsedDiscount > 99)
+                            {
+                                await botClient.SendTextMessageAsync(chatId, $"Valor no válido. Busqueda terminada.", cancellationToken: cancellationToken);
+                                await _telegramChatRepository.DeleteTelegramChat(telegramChat.Id);
+                                return;
+                            }
+                            await botClient.SendTextMessageAsync(chatId, $"Buscando...", cancellationToken: cancellationToken);
+                            amazonProducts = await _scrapingServices.ScrapeCategories(new() { MinimumDiscount = parsedDiscount });
+                            List<AmazonProductTelegram> amazonProductsTelegram = _mapper.Map<List<AmazonProductTelegram>>(amazonProducts);
+                            List<AmazonProductTelegram> existingAmazonProductsTelegram = await _amazonProductsTelegramRepository.GetAmazonProductsTelegram();
+                            List<AmazonProductTelegram> amazonProductsTelegramToAdd = amazonProductsTelegram.FindAll(x => !existingAmazonProductsTelegram.Any(y => y.Asin == x.Asin));
+                            List<AmazonProductTelegram> amazonProductsTelegramToUpdate = amazonProductsTelegram
+                                .FindAll(x => existingAmazonProductsTelegram.Any(y => y.Asin == x.Asin && y.LastPrice != x.LastPrice))
+                                .Select(newProduct =>
+                                {
+                                    var existingProduct = existingAmazonProductsTelegram.Find(p => p.Asin == newProduct.Asin);
+
+                                    var sentToTelegram = existingProduct.SentToTelegram
+                                        && existingProduct.LastSentTime.AddDays(1) > DateTime.UtcNow
+                                        && ((Math.Abs(newProduct.LastPrice - existingProduct.LastPrice) / existingProduct.LastPrice) * 100) < 10;
+
+                                    var updatedProduct = new AmazonProductTelegram
+                                    {
+                                        Asin = newProduct.Asin,
+                                        LastPrice = newProduct.LastPrice,
+                                        SentToTelegram = sentToTelegram
+                                    };
+                                    return updatedProduct;
+                                })
+                                .ToList();
+
+
+
+                            await _amazonProductsTelegramRepository.AddAmazonProductsTelegram(amazonProductsTelegramToAdd);
+                            _dataContext.ChangeTracker.Clear();
+                            await _amazonProductsTelegramRepository.UpdateAmazonProductsTelegram(amazonProductsTelegramToUpdate);
+                            await botClient.SendTextMessageAsync(chatId, $"Busqueda terminada. Se han encontrado {amazonProductsTelegramToAdd.Count} productos para añadir y {amazonProductsTelegramToUpdate.Count} productos para modificar.", cancellationToken: cancellationToken);
+                            await _telegramChatRepository.DeleteTelegramChat(telegramChat.Id);
+                            await SendAmazonProductsTelegramToChannel();
+                            break;
                     }
                 }
                 else
@@ -424,11 +480,11 @@ namespace ElAhorrador.Services.Implementations
 
         async Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
-            StartBot();
+            await _logsRepository.CreateLog("Error TelegramBot", exception);
             await Task.CompletedTask;
         }
 
-        private async Task SendAmazonProduct(AmazonProduct amazonProduct, string chatId)
+        private async Task SendAmazonProduct(AmazonProduct amazonProduct, string recipient)
         {
             string textToSend = $"<b>{amazonProduct.Name}</b>\n\n" +
                                 $"<a href='{amazonProduct.ProductUrl}'>🔗 Ver en Amazon</a>\n\n" +
@@ -438,12 +494,13 @@ namespace ElAhorrador.Services.Implementations
                                 $"✍️ Numero de Reseñas: <b>{amazonProduct.ReviewsCount}</b>\n\n" +
                                 $"🔍 ASIN: <b>{amazonProduct.Asin}</b>";
 
-            await _botClient.SendPhotoAsync(chatId, InputFile.FromUri(amazonProduct.ImageUrl), caption: textToSend, parseMode: ParseMode.Html);
+            await _botClient.SendPhotoAsync(recipient, InputFile.FromUri(amazonProduct.ImageUrl), caption: textToSend, parseMode: ParseMode.Html);
+
         }
 
-        private async Task SendAmazonProduct(AmazonProduct amazonProduct, long chatId)
+        private async Task SendAmazonProduct(AmazonProduct amazonProduct, long recipient)
         {
-            await SendAmazonProduct(amazonProduct, chatId.ToString());
+            await SendAmazonProduct(amazonProduct, recipient.ToString());
         }
 
         public async Task CheckAlerts()
@@ -466,6 +523,26 @@ namespace ElAhorrador.Services.Implementations
                     await _amazonAlertRepository.UpdateAmazonAlert(alert);
                 }
             });
+        }
+
+        public async Task SendAmazonProductsTelegramToChannel()
+        {
+            List<AmazonProductTelegram> amazonProductsTelegramToSend = await _amazonProductsTelegramRepository.GetAmazonProductsTelegramToSend();
+
+            foreach (AmazonProductTelegram amazonProductTelegram in amazonProductsTelegramToSend)
+            {
+                AmazonProduct amazonProduct = await _scrapingServices.ScrapeProduct(amazonProductTelegram.Asin);
+                if (amazonProduct is null)
+                {
+                    await _amazonProductsTelegramRepository.DeleteAmazonProductTelegram(amazonProductTelegram.Asin);
+                    continue;
+                }
+                await SendAmazonProduct(amazonProduct, _telegramConfiguration.ChannelName);
+                amazonProductTelegram.LastSentTime = DateTime.UtcNow;
+                amazonProductTelegram.SentToTelegram = true;
+                await _amazonProductsTelegramRepository.UpdateAmazonProductTelegram(amazonProductTelegram);
+                await Task.Delay(TimeSpan.FromSeconds(5));
+            }
         }
 
         private async Task SendSearchingWaitingMessage(long chatId)

@@ -1,7 +1,9 @@
 using AmazonApi.Data;
 using AmazonApi.Services.Implementations;
 using AmazonSuperOfertaBot.Data.Repositories.Implementations;
+using AmazonSuperOfertaBot.Data.Repositories.Interfaces;
 using AmazonSuperOfertaBot.Middlewares;
+using AmazonSuperOfertaBot.Services.Interfaces;
 using ElAhorrador.Data.Repositories.Implementations;
 using ElAhorrador.Data.Repositories.Interfaces;
 using ElAhorrador.Services.Implementations;
@@ -25,6 +27,8 @@ namespace AmazonApi
             builder.Services.AddScoped<ITelegramChatRepository, TelegramChatRepository>();
             builder.Services.AddScoped<IAmazonAlertRepository, AmazonAlertRepository>();
             builder.Services.AddScoped<ILogsRepository, LogsRepository>();
+            builder.Services.AddScoped<IAmazonCategoriesRepository, AmazonCategoriesRepository>();
+            builder.Services.AddScoped<IAmazonProductsTelegramRepository, AmazonProductsTelegramRepository>();
             builder.Services.AddScoped<TelegramServices>();
             builder.Services.AddQuartz(q =>
             {
@@ -46,6 +50,8 @@ namespace AmazonApi
             builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
             builder.Services.AddDbContext<DataContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            builder.Services.AddAutoMapper(typeof(Program));
 
             var app = builder.Build();
 

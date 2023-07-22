@@ -1,17 +1,31 @@
 ﻿using AmazonApi.Models;
+using AmazonSuperOfertaBot.Models.Enum;
 using System.ComponentModel.DataAnnotations;
 
-namespace ElAhorrador.Dtos
+namespace AmazonSuperOfertaBot.Dtos
 {
-    public record ScrapeRequestDto(
-        [Required] string SearchText,
-        decimal MinimumDiscount = 0,
-        decimal MinimumStars = 0,
-        int MinimumReviews = 0,
-        bool ProductsWithStock = true,
-        bool MustContainSearchText = false,
-        bool OrderByDiscount = true)
+    public class ScrapeRequestDto
     {
+        [Required]
+        public string SearchText { get; set; }
+        public ScrapeMethod ScrapeMethod { get; set; } = ScrapeMethod.Keyword;
+        public decimal MinimumDiscount { get; set; } = 0;
+        public decimal MinimumStars { get; set; } = 0;
+        public int MinimumReviews { get; set; } = 0;
+        public bool ProductsWithStock { get; set; } = true;
+        public bool MustContainSearchText { get; set; } = false;
+        public bool OrderByDiscount { get; set; } = true;
+
+        public ScrapeRequestDto()
+        {
+            // Parameterless constructor for AutoMapper
+        }
+
+        public ScrapeRequestDto(string searchText)
+        {
+            SearchText = searchText;
+        }
+
         public bool FilterAmazonProduct(AmazonProduct amazonProduct)
         {
             if (amazonProduct.Discount < MinimumDiscount) return false;
@@ -20,7 +34,6 @@ namespace ElAhorrador.Dtos
             if (ProductsWithStock && !amazonProduct.HasStock) return false;
             if (MustContainSearchText && !SearchText.Split().ToList().TrueForAll(s => amazonProduct.Name.Contains(s, StringComparison.InvariantCultureIgnoreCase))) return false;
             return true;
-
         }
     }
 }

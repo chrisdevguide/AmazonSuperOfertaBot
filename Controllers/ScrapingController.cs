@@ -1,5 +1,5 @@
-﻿using AmazonApi.Services.Implementations;
-using ElAhorrador.Dtos;
+﻿using AmazonSuperOfertaBot.Dtos;
+using AmazonSuperOfertaBot.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
@@ -24,6 +24,12 @@ namespace AmazonApi.Controllers
         public async Task<ActionResult> ScrapeProduct(string asin)
         {
             return Ok(await _scrapingServices.ScrapeProduct(asin));
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> ScrapeCategories([FromQuery][Required] ScrapeCategoriesRequestDto request)
+        {
+            return Ok(await _scrapingServices.ScrapeCategories(request));
         }
 
     }

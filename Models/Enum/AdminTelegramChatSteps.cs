@@ -5,6 +5,7 @@
         Started,
         AskForPassword,
         SetAction,
-        SendProductToChannel
+        SendProductToChannel,
+        SearchCategories
     }
 }

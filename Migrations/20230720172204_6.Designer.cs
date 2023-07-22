@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using AmazonApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AmazonSuperOfertaBot.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20230720172204_6")]
+    partial class _6
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,28 +36,6 @@ namespace AmazonSuperOfertaBot.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("AmazonCategories");
-                });
-
-            modelBuilder.Entity("AmazonSuperOfertaBot.Models.AmazonProductTelegram", b =>
-                {
-                    b.Property<string>("Asin")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("LastPrice")
-                        .HasColumnType("numeric");
-
-                    b.Property<DateTime>("LastSearchedTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("LastSentTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("SentToTelegram")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Asin");
-
-                    b.ToTable("AmazonProductsTelegram");
                 });
 
             modelBuilder.Entity("AmazonSuperOfertaBot.Models.Log", b =>

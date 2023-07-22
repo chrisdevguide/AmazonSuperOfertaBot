@@ -14,5 +14,7 @@ namespace AmazonApi.Data
         public DbSet<TelegramChat> TelegramChats { get; set; }
         public DbSet<AmazonAlert> AmazonAlerts { get; set; }
         public DbSet<Log> Logs { get; set; }
+        public DbSet<AmazonCategory> AmazonCategories { get; set; }
+        public DbSet<AmazonProductTelegram> AmazonProductsTelegram { get; set; }
     }
 }
