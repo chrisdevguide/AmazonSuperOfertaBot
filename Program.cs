@@ -3,6 +3,7 @@ using AmazonApi.Services.Implementations;
 using AmazonSuperOfertaBot.Data.Repositories.Implementations;
 using AmazonSuperOfertaBot.Data.Repositories.Interfaces;
 using AmazonSuperOfertaBot.Middlewares;
+using AmazonSuperOfertaBot.Services.Implementations;
 using AmazonSuperOfertaBot.Services.Interfaces;
 using ElAhorrador.Data.Repositories.Implementations;
 using ElAhorrador.Data.Repositories.Interfaces;
@@ -35,6 +36,7 @@ namespace AmazonApi
                 q.UseMicrosoftDependencyInjectionJobFactory();
                 JobKey checkAmazonAlertsJobKey = new(nameof(CheckAmazonAlertsBackgroundService));
                 JobKey startTelegramBotBackgroundServiceJobKey = new(nameof(StartTelegramBotBackgroundService));
+                JobKey searchAmazonCategoriesBackgroundServiceJobKey = new(nameof(SearchAmazonCategoriesBackgroundService));
 
                 q.AddJob<CheckAmazonAlertsBackgroundService>(j => j.WithIdentity(checkAmazonAlertsJobKey));
                 q.AddTrigger(t => t
@@ -45,6 +47,12 @@ namespace AmazonApi
                 q.AddJob<StartTelegramBotBackgroundService>(j => j.WithIdentity(startTelegramBotBackgroundServiceJobKey));
                 q.AddTrigger(t => t
                     .ForJob(startTelegramBotBackgroundServiceJobKey)
+                    .StartNow());
+
+                q.AddJob<SearchAmazonCategoriesBackgroundService>(j => j.WithIdentity(searchAmazonCategoriesBackgroundServiceJobKey));
+                q.AddTrigger(t => t
+                    .ForJob(searchAmazonCategoriesBackgroundServiceJobKey)
+                    .WithSimpleSchedule(s => s.WithIntervalInHours(1).RepeatForever())
                     .StartNow());
             });
             builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);

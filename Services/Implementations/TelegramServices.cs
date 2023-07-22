@@ -432,36 +432,8 @@ namespace ElAhorrador.Services.Implementations
                                 return;
                             }
                             await botClient.SendTextMessageAsync(chatId, $"Buscando...", cancellationToken: cancellationToken);
-                            amazonProducts = await _scrapingServices.ScrapeCategories(new() { MinimumDiscount = parsedDiscount });
-                            List<AmazonProductTelegram> amazonProductsTelegram = _mapper.Map<List<AmazonProductTelegram>>(amazonProducts);
-                            List<AmazonProductTelegram> existingAmazonProductsTelegram = await _amazonProductsTelegramRepository.GetAmazonProductsTelegram();
-                            List<AmazonProductTelegram> amazonProductsTelegramToAdd = amazonProductsTelegram.FindAll(x => !existingAmazonProductsTelegram.Any(y => y.Asin == x.Asin));
-                            List<AmazonProductTelegram> amazonProductsTelegramToUpdate = amazonProductsTelegram
-                                .FindAll(x => existingAmazonProductsTelegram.Any(y => y.Asin == x.Asin && y.LastPrice != x.LastPrice))
-                                .Select(newProduct =>
-                                {
-                                    var existingProduct = existingAmazonProductsTelegram.Find(p => p.Asin == newProduct.Asin);
-
-                                    var sentToTelegram = existingProduct.SentToTelegram
-                                        && existingProduct.LastSentTime.AddDays(1) > DateTime.UtcNow
-                                        && ((Math.Abs(newProduct.LastPrice - existingProduct.LastPrice) / existingProduct.LastPrice) * 100) < 10;
-
-                                    var updatedProduct = new AmazonProductTelegram
-                                    {
-                                        Asin = newProduct.Asin,
-                                        LastPrice = newProduct.LastPrice,
-                                        SentToTelegram = sentToTelegram
-                                    };
-                                    return updatedProduct;
-                                })
-                                .ToList();
-
-
-
-                            await _amazonProductsTelegramRepository.AddAmazonProductsTelegram(amazonProductsTelegramToAdd);
-                            _dataContext.ChangeTracker.Clear();
-                            await _amazonProductsTelegramRepository.UpdateAmazonProductsTelegram(amazonProductsTelegramToUpdate);
-                            await botClient.SendTextMessageAsync(chatId, $"Busqueda terminada. Se han encontrado {amazonProductsTelegramToAdd.Count} productos para añadir y {amazonProductsTelegramToUpdate.Count} productos para modificar.", cancellationToken: cancellationToken);
+                            await SearchAmazonCategories(parsedDiscount);
+                            await botClient.SendTextMessageAsync(chatId, $"Busqueda terminada correctamente.", cancellationToken: cancellationToken);
                             await _telegramChatRepository.DeleteTelegramChat(telegramChat.Id);
                             await SendAmazonProductsTelegramToChannel();
                             break;
@@ -541,8 +513,41 @@ namespace ElAhorrador.Services.Implementations
                 amazonProductTelegram.LastSentTime = DateTime.UtcNow;
                 amazonProductTelegram.SentToTelegram = true;
                 await _amazonProductsTelegramRepository.UpdateAmazonProductTelegram(amazonProductTelegram);
-                await Task.Delay(TimeSpan.FromSeconds(5));
+                await Task.Delay(TimeSpan.FromMinutes(1));
             }
+        }
+
+        public async Task SearchAmazonCategories(decimal minimumDiscount)
+        {
+            List<AmazonProduct> amazonProducts = await _scrapingServices.ScrapeCategories(new() { MinimumDiscount = minimumDiscount });
+            List<AmazonProductTelegram> amazonProductsTelegram = _mapper.Map<List<AmazonProductTelegram>>(amazonProducts);
+            List<AmazonProductTelegram> existingAmazonProductsTelegram = await _amazonProductsTelegramRepository.GetAmazonProductsTelegram();
+            List<AmazonProductTelegram> amazonProductsTelegramToAdd = amazonProductsTelegram.FindAll(x => !existingAmazonProductsTelegram.Any(y => y.Asin == x.Asin));
+            List<AmazonProductTelegram> amazonProductsTelegramToUpdate = amazonProductsTelegram
+                .FindAll(x => existingAmazonProductsTelegram.Any(y => y.Asin == x.Asin && y.LastPrice != x.LastPrice))
+                .Select(newProduct =>
+                {
+                    var existingProduct = existingAmazonProductsTelegram.Find(p => p.Asin == newProduct.Asin);
+
+                    var sentToTelegram = existingProduct.SentToTelegram
+                        && existingProduct.LastSentTime.AddDays(1) > DateTime.UtcNow
+                        && ((Math.Abs(newProduct.LastPrice - existingProduct.LastPrice) / existingProduct.LastPrice) * 100) < 10;
+
+                    var updatedProduct = new AmazonProductTelegram
+                    {
+                        Asin = newProduct.Asin,
+                        LastPrice = newProduct.LastPrice,
+                        SentToTelegram = sentToTelegram
+                    };
+                    return updatedProduct;
+                })
+                .ToList();
+
+
+
+            await _amazonProductsTelegramRepository.AddAmazonProductsTelegram(amazonProductsTelegramToAdd);
+            _dataContext.ChangeTracker.Clear();
+            await _amazonProductsTelegramRepository.UpdateAmazonProductsTelegram(amazonProductsTelegramToUpdate);
         }
 
         private async Task SendSearchingWaitingMessage(long chatId)
