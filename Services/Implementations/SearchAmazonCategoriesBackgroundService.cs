@@ -16,7 +16,7 @@ namespace AmazonSuperOfertaBot.Services.Implementations
         {
             IServiceScope scope = _serviceProvider.CreateScope();
             TelegramServices telegramServices = scope.ServiceProvider.GetRequiredService<TelegramServices>();
-            await telegramServices.SearchAmazonCategories(50);
+            await telegramServices.SearchAmazonCategories(70);
             await telegramServices.SendAmazonProductsTelegramToChannel();
         }
 
