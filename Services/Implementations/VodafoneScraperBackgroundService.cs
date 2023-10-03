@@ -18,7 +18,8 @@ namespace AmazonSuperOfertaBot.Services.Implementations
             List<string> urls = new()
             {
                 "https://www.vodafone.es/c/srv/vf-back-catalogo/api/ftol/terminal/terminaldetail/?clientType=0&shopType=7&registerType=2&sceneType=0&contractType=0&sap=315279&lineType=0&terminalType=8&flgAutoComplete=true&flgStockOnly=false&idList=251723936&showEvenWhitoutCheckCoverage=true&additionalLines=0",
-                "https://www.vodafone.es/c/srv/vf-back-catalogo/api/ftol/terminal/terminaldetail/?clientType=0&shopType=7&registerType=2&sceneType=0&contractType=0&sap=315264&lineType=0&terminalType=3&flgAutoComplete=true&flgStockOnly=false&idList=251723936&showEvenWhitoutCheckCoverage=true&additionalLines=0"
+                "https://www.vodafone.es/c/srv/vf-back-catalogo/api/ftol/terminal/terminaldetail/?clientType=0&shopType=7&registerType=2&sceneType=0&contractType=0&sap=315264&lineType=0&terminalType=3&flgAutoComplete=true&flgStockOnly=false&idList=251723936&showEvenWhitoutCheckCoverage=true&additionalLines=0",
+                "https://www.vodafone.es/c/srv/vf-back-catalogo/api/ftol/terminal/terminaldetail/?clientType=0&shopType=7&registerType=2&sceneType=0&contractType=0&sap=315282&lineType=0&terminalType=&flgAutoComplete=true&flgStockOnly=false&idList=251723936&showEvenWhitoutCheckCoverage=true&additionalLines=0"
             };
             long chatId = 6311333292;
             HttpClient http = new();
@@ -26,11 +27,15 @@ namespace AmazonSuperOfertaBot.Services.Implementations
             urls.ForEach(async url =>
             {
                 Welcome jsonResponse = await http.GetFromJsonAsync<Welcome>(url);
-                if (!jsonResponse.ListTerminals.TrueForAll(x => x.ItemStock.Stock == 0)) await telegramServices.SendMessage($"{jsonResponse.Nombre} is available.", chatId);
+                if (!jsonResponse.ListTerminals.TrueForAll(x => x.ItemStock.Stock == 0))
+                {
+                    jsonResponse.ListTerminals.ForEach(async x =>
+                    {
+                        await telegramServices.SendMessage($"{jsonResponse.Nombre} with color '{x.Color}' has {x.ItemStock.Stock} units available.", chatId);
+                    }
+                    );
+                }
             });
-
-            await telegramServices.SendMessage("System is working.", chatId); ;
-
         }
     }
 
@@ -44,6 +49,7 @@ namespace AmazonSuperOfertaBot.Services.Implementations
     public partial class ListTerminal
     {
         public ItemStock ItemStock { get; set; }
+        public string Color { get; set; }
     }
 
     public partial class ItemStock
