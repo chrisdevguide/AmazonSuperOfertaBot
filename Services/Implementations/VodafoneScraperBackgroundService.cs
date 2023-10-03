@@ -30,7 +30,7 @@ namespace AmazonSuperOfertaBot.Services.Implementations
 
                 jsonResponse.ListTerminals.ForEach(async x =>
                 {
-                    if (x.ItemStock.Stock < 1) return;
+                    if (x.ItemStock.Stock < 1 && DateTime.Now.Minute % 59 != 0) return;
                     await telegramServices.SendMessage($"{jsonResponse.Nombre} with color <b>'{x.Color}'</b> and capacity of <b>{x.Capacidad}</b> has <b>{x.ItemStock.Stock}</b> units available.", chatId);
                 }
                 );
