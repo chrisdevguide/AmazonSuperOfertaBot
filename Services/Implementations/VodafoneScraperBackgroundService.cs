@@ -29,7 +29,7 @@ namespace AmazonSuperOfertaBot.Services.Implementations
                 if (!jsonResponse.ListTerminals.TrueForAll(x => x.ItemStock.Stock == 0)) await telegramServices.SendMessage($"{jsonResponse.Nombre} is available.", chatId);
             });
 
-            if (DateTime.Now.Minute % 30 == 0) await telegramServices.SendMessage("System is working.", chatId); ;
+            await telegramServices.SendMessage("System is working.", chatId); ;
 
         }
     }
