@@ -31,7 +31,7 @@ namespace AmazonSuperOfertaBot.Services.Implementations
                 jsonResponse.ListTerminals.ForEach(async x =>
                 {
                     if (x.ItemStock.Stock < 1) return;
-                    await telegramServices.SendMessage($"{jsonResponse.Nombre} with color <b>'{x.Color}'</b> has <b>{x.ItemStock.Stock}</b> units available.", chatId);
+                    await telegramServices.SendMessage($"{jsonResponse.Nombre} with color <b>'{x.Color}'</b> and capacity of <b>{x.Capacidad}</b> has <b>{x.ItemStock.Stock}</b> units available.", chatId);
                 }
                 );
             });
@@ -49,6 +49,7 @@ namespace AmazonSuperOfertaBot.Services.Implementations
     {
         public ItemStock ItemStock { get; set; }
         public string Color { get; set; }
+        public string Capacidad { get; set; }
     }
 
     public partial class ItemStock
