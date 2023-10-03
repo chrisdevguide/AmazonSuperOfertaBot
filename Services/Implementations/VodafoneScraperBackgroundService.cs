@@ -19,6 +19,7 @@ namespace AmazonSuperOfertaBot.Services.Implementations
             {
                 "https://www.vodafone.es/c/srv/vf-back-catalogo/api/ftol/terminal/terminaldetail/?clientType=0&shopType=7&registerType=2&sceneType=0&contractType=0&sap=315279&lineType=0&terminalType=8&flgAutoComplete=true&flgStockOnly=false&idList=251723936&showEvenWhitoutCheckCoverage=true&additionalLines=0",
                 "https://www.vodafone.es/c/srv/vf-back-catalogo/api/ftol/terminal/terminaldetail/?clientType=0&shopType=7&registerType=2&sceneType=0&contractType=0&sap=315264&lineType=0&terminalType=3&flgAutoComplete=true&flgStockOnly=false&idList=251723936&showEvenWhitoutCheckCoverage=true&additionalLines=0",
+            "https://www.vodafone.es/c/srv/vf-back-catalogo/api/ftol/terminal/terminallistMultifinancingDevice/?clientType=0&shopType=7&registerType=2&sceneType=0&contractType=0&lineType=0&terminalType=2,3,6,8,9,10,12,14&flgAutoComplete=true&flgStockOnly=false&idList=251723936&additionalLines=0&showInRatesFilter=true"
             };
             long chatId = 6311333292;
             HttpClient http = new();
