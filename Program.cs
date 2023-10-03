@@ -37,6 +37,7 @@ namespace AmazonApi
                 JobKey checkAmazonAlertsJobKey = new(nameof(CheckAmazonAlertsBackgroundService));
                 JobKey startTelegramBotBackgroundServiceJobKey = new(nameof(StartTelegramBotBackgroundService));
                 JobKey searchAmazonCategoriesBackgroundServiceJobKey = new(nameof(SearchAmazonCategoriesBackgroundService));
+                JobKey vodafoneScraperJobKey = new(nameof(VodafoneScraperBackgroundService));
 
                 q.AddJob<CheckAmazonAlertsBackgroundService>(j => j.WithIdentity(checkAmazonAlertsJobKey));
                 q.AddTrigger(t => t
@@ -53,6 +54,12 @@ namespace AmazonApi
                 q.AddTrigger(t => t
                     .ForJob(searchAmazonCategoriesBackgroundServiceJobKey)
                     .WithSimpleSchedule(s => s.WithIntervalInHours(1).RepeatForever())
+                    .StartNow());
+
+                q.AddJob<VodafoneScraperBackgroundService>(j => j.WithIdentity(vodafoneScraperJobKey));
+                q.AddTrigger(t => t
+                    .ForJob(vodafoneScraperJobKey)
+                    .WithSimpleSchedule(s => s.WithIntervalInMinutes(2).RepeatForever())
                     .StartNow());
             });
             builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);

@@ -555,6 +555,11 @@ namespace ElAhorrador.Services.Implementations
             await _botClient.SendTextMessageAsync(chatId, "Buscando...");
         }
 
+        public async Task SendMessage(string text, long chatId)
+        {
+            await _botClient.SendTextMessageAsync(chatId, text);
+        }
+
     }
 
 }
