@@ -59,7 +59,7 @@ namespace AmazonApi
                 q.AddJob<VodafoneScraperBackgroundService>(j => j.WithIdentity(vodafoneScraperJobKey));
                 q.AddTrigger(t => t
                     .ForJob(vodafoneScraperJobKey)
-                    .WithSimpleSchedule(s => s.WithIntervalInSeconds(45).RepeatForever())
+                    .WithSimpleSchedule(s => s.WithIntervalInMinutes(1).RepeatForever())
                     .StartNow());
             });
             builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);

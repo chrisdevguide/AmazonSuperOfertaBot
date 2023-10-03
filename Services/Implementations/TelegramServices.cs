@@ -557,7 +557,7 @@ namespace ElAhorrador.Services.Implementations
 
         public async Task SendMessage(string text, long chatId)
         {
-            await _botClient.SendTextMessageAsync(chatId, text);
+            await _botClient.SendTextMessageAsync(chatId, text, parseMode: ParseMode.Html);
         }
 
     }

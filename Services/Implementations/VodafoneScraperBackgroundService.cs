@@ -27,14 +27,13 @@ namespace AmazonSuperOfertaBot.Services.Implementations
             urls.ForEach(async url =>
             {
                 Welcome jsonResponse = await http.GetFromJsonAsync<Welcome>(url);
-                if (!jsonResponse.ListTerminals.TrueForAll(x => x.ItemStock.Stock == 0))
+
+                jsonResponse.ListTerminals.ForEach(async x =>
                 {
-                    jsonResponse.ListTerminals.ForEach(async x =>
-                    {
-                        await telegramServices.SendMessage($"{jsonResponse.Nombre} with color '{x.Color}' has {x.ItemStock.Stock} units available.", chatId);
-                    }
-                    );
+                    if (x.ItemStock.Stock < 1) return;
+                    await telegramServices.SendMessage($"{jsonResponse.Nombre} with color <b>'{x.Color}'</b> has <b>{x.ItemStock.Stock}</b> units available.", chatId);
                 }
+                );
             });
         }
     }
