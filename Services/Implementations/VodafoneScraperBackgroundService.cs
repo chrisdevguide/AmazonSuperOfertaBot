@@ -19,7 +19,6 @@ namespace AmazonSuperOfertaBot.Services.Implementations
             {
                 "https://www.vodafone.es/c/srv/vf-back-catalogo/api/ftol/terminal/terminaldetail/?clientType=0&shopType=7&registerType=2&sceneType=0&contractType=0&sap=315279&lineType=0&terminalType=8&flgAutoComplete=true&flgStockOnly=false&idList=251723936&showEvenWhitoutCheckCoverage=true&additionalLines=0",
                 "https://www.vodafone.es/c/srv/vf-back-catalogo/api/ftol/terminal/terminaldetail/?clientType=0&shopType=7&registerType=2&sceneType=0&contractType=0&sap=315264&lineType=0&terminalType=3&flgAutoComplete=true&flgStockOnly=false&idList=251723936&showEvenWhitoutCheckCoverage=true&additionalLines=0",
-                "https://www.vodafone.es/c/srv/vf-back-catalogo/api/ftol/terminal/terminaldetail/?clientType=0&shopType=7&registerType=2&sceneType=0&contractType=0&sap=315226&lineType=0&terminalType=3&flgAutoComplete=true&flgStockOnly=false&idList=251723936&showEvenWhitoutCheckCoverage=true&additionalLines=0"
             };
             long chatId = 6311333292;
             HttpClient http = new();
@@ -30,7 +29,7 @@ namespace AmazonSuperOfertaBot.Services.Implementations
 
                 jsonResponse?.ListTerminals?.ForEach(async x =>
                 {
-                    if (x.ItemStock.Stock < 1 && DateTime.Now.Minute % 59 != 0) return;
+                    if (x.ItemStock.Stock < 1) return;
                     await telegramServices.SendMessage($"{jsonResponse.Nombre} with color <b>'{x.Color}'</b> and capacity of <b>{x.Capacidad}</b> has <b>{x.ItemStock.Stock}</b> units available.", chatId);
                 }
                 );
