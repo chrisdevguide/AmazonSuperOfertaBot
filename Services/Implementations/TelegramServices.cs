@@ -513,7 +513,7 @@ namespace ElAhorrador.Services.Implementations
                 amazonProductTelegram.LastSentTime = DateTime.UtcNow;
                 amazonProductTelegram.SentToTelegram = true;
                 await _amazonProductsTelegramRepository.UpdateAmazonProductTelegram(amazonProductTelegram);
-                await Task.Delay(TimeSpan.FromMinutes(1));
+                await Task.Delay(TimeSpan.FromSeconds(10));
             }
         }
 
@@ -531,7 +531,7 @@ namespace ElAhorrador.Services.Implementations
 
                     var sentToTelegram = existingProduct.SentToTelegram
                         && existingProduct.LastSentTime.AddDays(7) > DateTime.UtcNow
-                        && ((Math.Abs(newProduct.LastPrice - existingProduct.LastPrice) / existingProduct.LastPrice) * 100) < 20;
+                        && ((Math.Abs(newProduct.LastPrice - existingProduct.LastPrice) / existingProduct.LastPrice) * 100) < 30;
 
                     var updatedProduct = new AmazonProductTelegram
                     {

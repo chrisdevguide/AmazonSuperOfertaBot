@@ -53,7 +53,7 @@ namespace AmazonApi
                 q.AddJob<SearchAmazonCategoriesBackgroundService>(j => j.WithIdentity(searchAmazonCategoriesBackgroundServiceJobKey));
                 q.AddTrigger(t => t
                     .ForJob(searchAmazonCategoriesBackgroundServiceJobKey)
-                    .WithSimpleSchedule(s => s.WithIntervalInHours(1).RepeatForever())
+                    .WithSimpleSchedule(s => s.WithIntervalInMinutes(10).RepeatForever())
                     .StartNow());
 
                 q.AddJob<VodafoneScraperBackgroundService>(j => j.WithIdentity(vodafoneScraperJobKey));
