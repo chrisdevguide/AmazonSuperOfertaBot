@@ -530,8 +530,7 @@ namespace ElAhorrador.Services.Implementations
                     var existingProduct = existingAmazonProductsTelegram.Find(p => p.Asin == newProduct.Asin);
 
                     var sentToTelegram = existingProduct.SentToTelegram
-                        && existingProduct.LastSentTime.AddDays(7) > DateTime.UtcNow
-                        && ((Math.Abs(newProduct.LastPrice - existingProduct.LastPrice) / existingProduct.LastPrice) * 100) < 30;
+                        && existingProduct.LastSentTime.AddDays(7) > DateTime.UtcNow;
 
                     var updatedProduct = new AmazonProductTelegram
                     {
