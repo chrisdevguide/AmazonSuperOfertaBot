@@ -35,7 +35,7 @@ namespace AmazonSuperOfertaBot.Services.Implementations
                 );
             });
 
-            if (DateTime.Now.Hour % 4 == 0)
+            if (DateTime.Now.Hour % 4 == 0 && DateTime.Now.Minute == 0)
             {
                 telegramServices.SendMessage($"System is working.", chatId).RunSynchronously();
             }
